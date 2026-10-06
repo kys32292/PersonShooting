@@ -19,10 +19,11 @@ public class GameManager : MonoBehaviour
     [Header("UI 연결")]
     [SerializeField] private PerkUIController perkUI;
 
+    // 2026-10-06: 경험치 바 UI 연결용 필드 추가 (체력/탄환 UI와 동일한 패턴)
     [Header("����ġ UI")]
     [SerializeField] private Image expBar;
     [SerializeField] private TMP_Text levelText;
-    [SerializeField] private TMP_Text expValueText;
+    [SerializeField] private TMP_Text expValueText; // 2026-10-06: 경험치 바 가운데 "현재/다음레벨 필요치" 텍스트
 
     private PlayerMove playerPrefab;
 
@@ -39,7 +40,7 @@ public class GameManager : MonoBehaviour
 
         perkUI.CloseUI();
 
-        RefreshEXPUI();
+        RefreshEXPUI(); // 2026-10-06: 시작 시 경험치 바 초기값 표시
     }
 
     public void GameStarted()
@@ -56,18 +57,21 @@ public class GameManager : MonoBehaviour
             LevelUp();
         }
 
-        RefreshEXPUI();
+        RefreshEXPUI(); // 2026-10-06: 경험치 획득 시 바/텍스트 갱신
     }
 
     public void LevelUp()
     {
         currentLeve++;
+        // 2026-10-06: 레벨업해도 0으로 초기화하지 않고 이전 레벨 필요치 그대로 유지
+        // (예: 1->2는 100/175, 2->3은 175/306 식으로 누적)
         currentEXP = maxEXP;
-        maxEXP = maxEXP * 1.75f;
+        maxEXP = maxEXP * 1.75f; // 2026-10-06: 레벨업 요구치 증가율 1.2 -> 1.75로 변경
 
         ShowPerkSelection();
     }
 
+    // 2026-10-06: 체력/탄환 UI와 동일하게 경험치 바/레벨/진행치 텍스트를 갱신하는 메서드 추가
     private void RefreshEXPUI()
     {
         if (expBar != null)

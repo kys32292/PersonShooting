@@ -29,7 +29,7 @@ public class PlayerMove : MonoBehaviour, IDamageable
         currentAmmo = magazineSize;
 
         RefreshHPUI();
-        RefreshAmmoUI(currentAmmo + " : " + magazineSize);
+        RefreshAmmoUI(currentAmmo.ToString()); // 2026-10-06: Main 탄환 UI와 맞춰 "현재/용량" 분리 표시로 변경
     }
 
     // Update is called once per frame
@@ -211,6 +211,8 @@ public class PlayerMove : MonoBehaviour, IDamageable
 
                 GameObject bullet = Instantiate(bulletPrefab, MuzzleTrans.position, fireRot);
 
+                // 2026-10-06: 총알에 발사자(owner)를 표시해서 자기 자신과는 충돌하지 않도록 함
+                // (bulletCount > 1일 때 같은 지점에서 동시에 나간 총알끼리 서로 부딪히는 문제는 Bullet.cs에서 별도 처리)
                 Bullet bulletComp = bullet.GetComponent<Bullet>();
                 if (bulletComp != null)
                 {
@@ -220,7 +222,7 @@ public class PlayerMove : MonoBehaviour, IDamageable
 
             canFire = false;
 
-            RefreshAmmoUI(currentAmmo + " : " + magazineSize);
+            RefreshAmmoUI(currentAmmo.ToString()); // 2026-10-06: Main 탄환 UI와 맞춰 "현재/용량" 분리 표시로 변경
         }
     }
 
@@ -242,7 +244,7 @@ public class PlayerMove : MonoBehaviour, IDamageable
                 isReloading = false;
                 canFire = true;
 
-                RefreshAmmoUI(currentAmmo + " : " + magazineSize);
+                RefreshAmmoUI(currentAmmo.ToString()); // 2026-10-06: Main 탄환 UI와 맞춰 "현재/용량" 분리 표시로 변경
             }
         }
     }
@@ -298,11 +300,14 @@ public class PlayerMove : MonoBehaviour, IDamageable
     private Image hpBar;
 
     [SerializeField]
-    private TMP_Text hpText;
+    private TMP_Text hpText; // 2026-10-06: 체력 숫자 표시용 텍스트 추가 (HealthValue UI와 연결)
 
     [Header("총알 Text")]
     [SerializeField]
     private TMP_Text ammoText;
+
+    [SerializeField]
+    private TMP_Text ammoMaxText; // 2026-10-06: Main 씬 기존 탄환 UI(AmmoReserve 재사용)의 탄창 용량 표시용, 없으면 무시됨
 
     private void RefreshHPUI()
     {
@@ -311,7 +316,7 @@ public class PlayerMove : MonoBehaviour, IDamageable
             hpBar.fillAmount = currentHP / maxHP;
         }
 
-        if (hpText != null)
+        if (hpText != null) // 2026-10-06
         {
             hpText.text = Mathf.CeilToInt(currentHP).ToString();
         }
@@ -322,6 +327,12 @@ public class PlayerMove : MonoBehaviour, IDamageable
         if(ammoText != null)
         {
             ammoText.text = printText;
+        }
+
+        // 2026-10-06: Main 씬의 기존 탄환 UI(현재/탄창용량 분리 표시)와 호환
+        if (ammoMaxText != null)
+        {
+            ammoMaxText.text = magazineSize.ToString();
         }
     }
 

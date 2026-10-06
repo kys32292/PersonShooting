@@ -38,6 +38,8 @@ public class Spitter : EnemyBase
         Quaternion fireRot = Quaternion.LookRotation(fireDir);
 
         GameObject bullet = Instantiate(bulletPrefab, firePos.position, fireRot);
+
+        // 2026-10-06: Bullet.owner 설정 (자기 자신과 충돌 방지, PlayerMove.FireGun과 동일한 패턴)
         Bullet bulletComp = bullet.GetComponent<Bullet>();
         if (bulletComp != null)
         {
