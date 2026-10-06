@@ -1,21 +1,28 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
 
-    [Header("°æÇèÄ¡, ·¹º§")]
+    [Header("ï¿½ï¿½ï¿½ï¿½Ä¡, ï¿½ï¿½ï¿½ï¿½")]
     public float currentEXP = 0;
     public float maxEXP = 100;
     public int currentLeve = 1;
 
-    [Header("Æ¯¼º µ¥ÀÌÅÍº£ÀÌ½º")]
+    [Header("Æ¯ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Íºï¿½ï¿½Ì½ï¿½")]
     [SerializeField] private List<PerkData> allPerks;
 
-    [Header("UI ¿¬°á")]
+    [Header("UI ï¿½ï¿½ï¿½ï¿½")]
     [SerializeField] private PerkUIController perkUI;
+
+    [Header("ï¿½ï¿½ï¿½ï¿½Ä¡ UI")]
+    [SerializeField] private Image expBar;
+    [SerializeField] private TMP_Text levelText;
+    [SerializeField] private TMP_Text expValueText;
 
     private PlayerMove playerPrefab;
 
@@ -31,6 +38,8 @@ public class GameManager : MonoBehaviour
         perkUI = GetComponent<PerkUIController>();
 
         perkUI.CloseUI();
+
+        RefreshEXPUI();
     }
 
     public void GameStarted()
@@ -46,6 +55,8 @@ public class GameManager : MonoBehaviour
         {
             LevelUp();
         }
+
+        RefreshEXPUI();
     }
 
     public void LevelUp()
@@ -57,19 +68,37 @@ public class GameManager : MonoBehaviour
         ShowPerkSelection();
     }
 
+    private void RefreshEXPUI()
+    {
+        if (expBar != null)
+        {
+            expBar.fillAmount = currentEXP / maxEXP;
+        }
+
+        if (levelText != null)
+        {
+            levelText.text = "Lv. " + currentLeve;
+        }
+
+        if (expValueText != null)
+        {
+            expValueText.text = Mathf.FloorToInt(currentEXP) + " / " + Mathf.CeilToInt(maxEXP);
+        }
+    }
+
     private void ShowPerkSelection()
     {
-        // 1. ÀüÃ¼ Æ¯¼º ¸ñ·Ï Áß Áßº¹ ¾øÀÌ 3°³ »Ì±â
+        // 1. ï¿½ï¿½Ã¼ Æ¯ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ßºï¿½ ï¿½ï¿½ï¿½ï¿½ 3ï¿½ï¿½ ï¿½Ì±ï¿½
         List<PerkData> selectedPerks = GetRandomPerks(3);
 
-        // 2. UI ¶ç¿ì±â
+        // 2. UI ï¿½ï¿½ï¿½ï¿½
         if (perkUI != null)
         {
             perkUI.DisplayPerks(selectedPerks);
         }
     }
 
-    // Áßº¹ ¾ø´Â 3°³ »Ì±â ·ÎÁ÷
+    // ï¿½ßºï¿½ ï¿½ï¿½ï¿½ï¿½ 3ï¿½ï¿½ ï¿½Ì±ï¿½ ï¿½ï¿½ï¿½ï¿½
     private List<PerkData> GetRandomPerks(int count)
     {
         List<PerkData> tempList = new List<PerkData>(allPerks);
@@ -82,14 +111,14 @@ public class GameManager : MonoBehaviour
             int randomIndex = Random.Range(0, tempList.Count);
             result.Add(tempList[randomIndex]);
 
-            // ÀÌ¹Ì »ÌÈù Ç×¸ñÀº ÀÓ½Ã ¸®½ºÆ®¿¡¼­ Á¦°ÅÇÏ¿© Áßº¹ ¹æÁö
+            // ï¿½Ì¹ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½×¸ï¿½ï¿½ï¿½ ï¿½Ó½ï¿½ ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï¿ï¿½ ï¿½ßºï¿½ ï¿½ï¿½ï¿½ï¿½
             tempList.RemoveAt(randomIndex);
         }
 
         return result;
     }
 
-    // ÇÃ·¹ÀÌ¾î°¡ Æ¯¼ºÀ» ¼±ÅÃÇßÀ» ¶§ È£ÃâµÊ
+    // ï¿½Ã·ï¿½ï¿½Ì¾î°¡ Æ¯ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ È£ï¿½ï¿½ï¿½
     public void SelectPerk(PerkData perk)
     {
         PlayerMove player = FindObjectOfType<PlayerMove>();
@@ -98,7 +127,7 @@ public class GameManager : MonoBehaviour
             player.ApplyPerk(perk);
         }
 
-        // °ÔÀÓ Àç°³ ¹× UI ´Ý±â
+        // ï¿½ï¿½ï¿½ï¿½ ï¿½ç°³ ï¿½ï¿½ UI ï¿½Ý±ï¿½
         Time.timeScale = 1f;
         perkUI.CloseUI();
     }

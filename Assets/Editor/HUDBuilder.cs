@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -50,6 +51,139 @@ public static class HUDBuilder
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
         Debug.Log("HUD built and scene saved: Assets/Scenes/Main.unity");
+    }
+
+    [MenuItem("Tools/HUD/Build Gameplay HUD (PlayerTestScene)")]
+    public static void BuildGameplayHUD_PlayerTestScene()
+    {
+        var scene = EditorSceneManager.OpenScene("Assets/JCH_FPS/Scenes/PlayerTestScene.unity");
+
+        GameObject canvasGO = GameObject.Find("Canvas");
+        if (canvasGO == null)
+        {
+            canvasGO = new GameObject("Canvas", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+        }
+
+        // Clear previous HUD root if it exists, so re-running the tool is idempotent
+        var existingHud = canvasGO.transform.Find("HUD_HealthExp");
+        if (existingHud != null) Object.DestroyImmediate(existingHud.gameObject);
+
+        RectTransform hudRoot = CreateUIObject("HUD_HealthExp", canvasGO.transform);
+        Stretch(hudRoot);
+
+        BuildTopCenterTMP(hudRoot, out Image healthFillImg, out TMP_Text healthValueTMP, out Image expFillImg, out TMP_Text levelValueTMP, out TMP_Text expValueTMP);
+
+        var player = Object.FindObjectOfType<PlayerMove>();
+        if (player != null)
+        {
+            var so = new SerializedObject(player);
+            so.FindProperty("hpBar").objectReferenceValue = healthFillImg;
+            so.FindProperty("hpText").objectReferenceValue = healthValueTMP;
+            so.ApplyModifiedPropertiesWithoutUndo();
+        }
+        else
+        {
+            Debug.LogWarning("PlayerMove를 씬에서 찾지 못해 체력 UI를 연결하지 못했습니다.");
+        }
+
+        var gm = Object.FindObjectOfType<GameManager>();
+        if (gm != null)
+        {
+            var so = new SerializedObject(gm);
+            so.FindProperty("expBar").objectReferenceValue = expFillImg;
+            so.FindProperty("levelText").objectReferenceValue = levelValueTMP;
+            so.FindProperty("expValueText").objectReferenceValue = expValueTMP;
+            so.ApplyModifiedPropertiesWithoutUndo();
+        }
+        else
+        {
+            Debug.LogWarning("GameManager를 씬에서 찾지 못해 경험치 UI를 연결하지 못했습니다.");
+        }
+
+        EditorSceneManager.MarkSceneDirty(scene);
+        EditorSceneManager.SaveScene(scene);
+        Debug.Log("HUD(체력/경험치) 생성 및 연결 완료: Assets/JCH_FPS/Scenes/PlayerTestScene.unity");
+    }
+
+    [MenuItem("Tools/HUD/Wire Ammo UI (PlayerTestScene)")]
+    public static void WireAmmoUI_PlayerTestScene()
+    {
+        var scene = EditorSceneManager.OpenScene("Assets/JCH_FPS/Scenes/PlayerTestScene.unity");
+
+        var ammoGO = GameObject.Find("AmmoCount");
+        var player = Object.FindObjectOfType<PlayerMove>();
+
+        if (ammoGO == null)
+        {
+            Debug.LogWarning("AmmoCount 오브젝트를 씬에서 찾지 못해 탄환 UI를 연결하지 못했습니다.");
+            return;
+        }
+
+        if (player == null)
+        {
+            Debug.LogWarning("PlayerMove를 씬에서 찾지 못해 탄환 UI를 연결하지 못했습니다.");
+            return;
+        }
+
+        var ammoTMP = ammoGO.GetComponent<TMP_Text>();
+        var so = new SerializedObject(player);
+        so.FindProperty("ammoText").objectReferenceValue = ammoTMP;
+        so.ApplyModifiedPropertiesWithoutUndo();
+
+        EditorSceneManager.MarkSceneDirty(scene);
+        EditorSceneManager.SaveScene(scene);
+        Debug.Log("탄환 UI(AmmoCount -> ammoText) 연결 완료: Assets/JCH_FPS/Scenes/PlayerTestScene.unity");
+    }
+
+    static void BuildTopCenterTMP(RectTransform hudRoot, out Image healthFillImg, out TMP_Text healthValueTMP, out Image expFillImg, out TMP_Text levelValueTMP, out TMP_Text expValueTMP)
+    {
+        // Health/Exp bars sized 20% larger than the original prototype layout.
+        RectTransform group = CreateUIObject("TopCenter_HealthExp", hudRoot);
+        group.anchorMin = group.anchorMax = new Vector2(0.5f, 1f);
+        group.pivot = new Vector2(0.5f, 1f);
+        group.sizeDelta = new Vector2(456, 66);
+        group.anchoredPosition = new Vector2(0, -22);
+
+        // ---- Health bar ----
+        RectTransform healthBG = CreateBar("HealthBar_BG", group, HealthBG, new Vector2(432, 29), new Vector2(0, 0));
+        healthFillImg = CreateFillBar(healthBG, "HealthBar_Fill", HealthFill, 1f);
+
+        CreateTextTMP(healthBG, "HealthLabel", "HP", 15, TextGray, FontStyles.Bold, TextAlignmentOptions.MidlineLeft,
+            new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(10, 0), new Vector2(60, 24));
+        healthValueTMP = CreateTextTMP(healthBG, "HealthValue", "100", 19, TextWhite, FontStyles.Bold, TextAlignmentOptions.MidlineRight,
+            new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-10, 0), new Vector2(84, 24));
+
+        // ---- Exp bar (below health bar) ----
+        RectTransform expBG = CreateBar("EXPBar_BG", group, ExpBG, new Vector2(432, 12), new Vector2(0, -36));
+        expFillImg = CreateFillBar(expBG, "EXPBar_Fill", ExpFill, 0f);
+
+        levelValueTMP = CreateTextTMP(expBG, "EXPLabel", "Lv. 1", 10, TextGray, FontStyles.Bold, TextAlignmentOptions.MidlineLeft,
+            new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(6, 0), new Vector2(50, 12));
+
+        // Centered "현재 경험치 / 레벨업 필요치" progress text
+        expValueTMP = CreateTextTMP(expBG, "EXPValue", "0 / 100", 9, TextWhite, FontStyles.Bold, TextAlignmentOptions.Midline,
+            new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(140, 12));
+    }
+
+    static TMP_Text CreateTextTMP(RectTransform parent, string name, string content, float fontSize, Color color, FontStyles style, TextAlignmentOptions alignment,
+        Vector2 anchorMin, Vector2 anchorMax, Vector2 pivot, Vector2 anchoredPos, Vector2 size)
+    {
+        RectTransform rt = CreateUIObject(name, parent);
+        rt.anchorMin = anchorMin;
+        rt.anchorMax = anchorMax;
+        rt.pivot = pivot;
+        rt.anchoredPosition = anchoredPos;
+        rt.sizeDelta = size;
+
+        var text = rt.gameObject.AddComponent<TextMeshProUGUI>();
+        text.text = content;
+        text.fontSize = fontSize;
+        text.fontStyle = style;
+        text.color = color;
+        text.alignment = alignment;
+        text.enableWordWrapping = false;
+        text.overflowMode = TextOverflowModes.Overflow;
+        return text;
     }
 
     static void BuildTopCenter(RectTransform hudRoot)

@@ -6,11 +6,11 @@ using UnityEngine.UI;
 
 public class PlayerMove : MonoBehaviour, IDamageable
 {
-    [Header("Ã¼·Â")]
+    [Header("Ã¼ï¿½ï¿½")]
     public float maxHP = 100f;
     private float currentHP = 0f;
 
-    [Header("ÀÌµ¿ ¼Óµµ")]
+    [Header("ï¿½Ìµï¿½ ï¿½Óµï¿½")]
     [SerializeField]
     private float moveSpeed = 3f;
 
@@ -48,9 +48,9 @@ public class PlayerMove : MonoBehaviour, IDamageable
         Reload();
     }
 
-    // ÀÌµ¿ ------------------------------------
+    // ï¿½Ìµï¿½ ------------------------------------
 
-    [Header("Á¡ÇÁ ³ôÀÌ")]
+    [Header("ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½")]
     [SerializeField]
     private float jumpForce = 7f;
 
@@ -76,7 +76,7 @@ public class PlayerMove : MonoBehaviour, IDamageable
         return inputDir;
     }
 
-    [Header("¶¥ ·¹ÀÌ¾î ¼³Á¤")]
+    [Header("ï¿½ï¿½ ï¿½ï¿½ï¿½Ì¾ï¿½ ï¿½ï¿½ï¿½ï¿½")]
     [SerializeField]
     private LayerMask groundLayer;
 
@@ -84,26 +84,26 @@ public class PlayerMove : MonoBehaviour, IDamageable
     {
         if (col == null) return false;
 
-        // 1. ÄÝ¶óÀÌ´õÀÇ °¡Àå ¹Ø¸é(¹ß¹Ù´Ú) Áß½ÉÁ¡ ±¸ÇÏ±â
+        // 1. ï¿½Ý¶ï¿½ï¿½Ì´ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ø¸ï¿½(ï¿½ß¹Ù´ï¿½) ï¿½ß½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ï±ï¿½
         Vector3 bottomCenter = new Vector3(col.bounds.center.x, col.bounds.min.y + 0.05f, col.bounds.center.z);
 
-        // 2. ¹ß¹Ù´Ú¿¡¼­ ¾Æ·¡·Î 0.1m¸¸ Ray¸¦ ½÷¼­ ¹Ù´Ú ·¹ÀÌ¾î¿Í ´ê¾Ò´ÂÁö È®ÀÎ
+        // 2. ï¿½ß¹Ù´Ú¿ï¿½ï¿½ï¿½ ï¿½Æ·ï¿½ï¿½ï¿½ 0.1mï¿½ï¿½ Rayï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ù´ï¿½ ï¿½ï¿½ï¿½Ì¾ï¿½ï¿½ ï¿½ï¿½Ò´ï¿½ï¿½ï¿½ È®ï¿½ï¿½
         return Physics.Raycast(bottomCenter, Vector3.down, 0.1f, groundLayer);
     }
 
-    // ÁÂ¿ì È¸Àü ----------------------------------
+    // ï¿½Â¿ï¿½ È¸ï¿½ï¿½ ----------------------------------
 
-    [Header("¸¶¿ì½º °¨µµ")]
+    [Header("ï¿½ï¿½ï¿½ì½º ï¿½ï¿½ï¿½ï¿½")]
     public float mouseSensitivity = 3f;
 
     float xRot;
     float yRot;
 
-    [Header("ÇÃ·¹ÀÌ¾îÀÇ ÆÈ")]
+    [Header("ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ï¿½ï¿½ ï¿½ï¿½")]
     [SerializeField]
     private Transform playerArm;
 
-    [Header("»ó, ÇÏ Á¦ÇÑ °¢µµ")]
+    [Header("ï¿½ï¿½, ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½")]
     public float minAngle = -90f;
     public float maxAngle = 90f;
 
@@ -121,45 +121,45 @@ public class PlayerMove : MonoBehaviour, IDamageable
         transform.rotation = Quaternion.Euler(0, yRot, 0);
     }
 
-    // ÃÑ ¹ß»ç ----------------------------------------
+    // ï¿½ï¿½ ï¿½ß»ï¿½ ----------------------------------------
 
     private Camera mainCamera;
 
-    [Header("»ç°Å¸®")]
+    [Header("ï¿½ï¿½Å¸ï¿½")]
     [SerializeField]
     private float Range = 100f;
 
-    [Header("µ¥¹ÌÁö")]
+    [Header("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½")]
     [SerializeField]
     private int damage = 10;
 
-    [Header("¹ß»ç °£°Ý")]
+    [Header("ï¿½ß»ï¿½ ï¿½ï¿½ï¿½ï¿½")]
     [SerializeField]
     private float fireRate = 0.2f;
     private float fireRateTime = 0f;
 
-    [Header("ÅºÃ¢ Å©±â")]
+    [Header("ÅºÃ¢ Å©ï¿½ï¿½")]
     [SerializeField]
     private int magazineSize = 50;
     private int currentAmmo = 0;
 
-    [Header("ÀåÀü ½Ã°£")]
+    [Header("ï¿½ï¿½ï¿½ï¿½ ï¿½Ã°ï¿½")]
     [SerializeField]
     private float reload = 2f;
     private float reloadTime = 0f;
 
-    [Header("°¨Áö ·¹ÀÌ¾î")]
+    [Header("ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ì¾ï¿½")]
     private LayerMask hitLayer;
 
-    [Header("ÃÑ¾Ë ¿ÀºêÁ§Æ®")]
+    [Header("ï¿½Ñ¾ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®")]
     [SerializeField]
     private GameObject bulletPrefab;
 
-    [Header("ÃÑ¾Ë ¹ß»ç À§Ä¡")]
+    [Header("ï¿½Ñ¾ï¿½ ï¿½ß»ï¿½ ï¿½ï¿½Ä¡")]
     [SerializeField]
     Transform MuzzleTrans;
 
-    [Header("ÃÑ¾Ë ¹ß»ç ¼ö")]
+    [Header("ï¿½Ñ¾ï¿½ ï¿½ß»ï¿½ ï¿½ï¿½")]
     [SerializeField]
     private int bulletCount = 1;
 
@@ -179,16 +179,16 @@ public class PlayerMove : MonoBehaviour, IDamageable
             Ray ray = mainCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 1f));
             Vector3 targetPoint;
 
-            if(Physics.Raycast(ray, out RaycastHit hit, 1000f)) // 1000ÀÇ °Å¸®¿¡ ·¹ÀÌÄÉ½ºÆ® ¹ß»ç
+            if(Physics.Raycast(ray, out RaycastHit hit, 1000f)) // 1000ï¿½ï¿½ ï¿½Å¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½É½ï¿½Æ® ï¿½ß»ï¿½
             {
-                targetPoint = hit.point; // ºÎ‹HÈú ½Ã ±×°÷À» Å¸±êÀ¸·Î
+                targetPoint = hit.point; // ï¿½Î‹Hï¿½ï¿½ ï¿½ï¿½ ï¿½×°ï¿½ï¿½ï¿½ Å¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
             }
             else
             {
-                targetPoint = ray.GetPoint(Range); // ºÎ‹HÈ÷Áö ¾ÊÀ» ½Ã ÃÖ´ë °Å¸®¸¦ Å¸±êÀ¸·Î
+                targetPoint = ray.GetPoint(Range); // ï¿½Î‹Hï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Ö´ï¿½ ï¿½Å¸ï¿½ï¿½ï¿½ Å¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
             }
 
-            Vector3 fireDir = (targetPoint - MuzzleTrans.position).normalized; // ¹ß»ç ¹æÇâ
+            Vector3 fireDir = (targetPoint - MuzzleTrans.position).normalized; // ï¿½ß»ï¿½ ï¿½ï¿½ï¿½ï¿½
 
             /*
             Quaternion fireRot = Quaternion.LookRotation(fireDir);
@@ -196,11 +196,11 @@ public class PlayerMove : MonoBehaviour, IDamageable
             GameObject bullet = Instantiate(bulletPrefab, MuzzleTrans.position, fireRot);
             */
 
-            for (int i = 0; i < bulletCount; i++) // »êÅº
+            for (int i = 0; i < bulletCount; i++) // ï¿½ï¿½Åº
             {
-                float angleOffset = 0f; // ±âº» 0
+                float angleOffset = 0f; // ï¿½âº» 0
 
-                if(bulletCount > 1) // ÃÑ¾ËÀÌ Ãß°¡ µÉ °æ¿ì ¿ÀÇÁ¼Â °ªÀ» Ãß°¡
+                if(bulletCount > 1) // ï¿½Ñ¾ï¿½ï¿½ï¿½ ï¿½ß°ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ß°ï¿½
                 {
                     float step = spreadAngle / (bulletCount - 1);
                     angleOffset = -(spreadAngle / 2f) + (step * i);
@@ -221,7 +221,7 @@ public class PlayerMove : MonoBehaviour, IDamageable
     /*
     Vector3 CameraCenter()
     {
-        return Camera.main.ViewportToWorldPoint(new Vector3(0.5f, 0.5f, 1f)); // Ä«¸Þ¶ó Á¤Áß¾Ó ±âÁØ 1¹ÌÅÍ ¾Õ
+        return Camera.main.ViewportToWorldPoint(new Vector3(0.5f, 0.5f, 1f)); // Ä«ï¿½Þ¶ï¿½ ï¿½ï¿½ï¿½ß¾ï¿½ ï¿½ï¿½ï¿½ï¿½ 1ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
     }
     */
 
@@ -259,9 +259,9 @@ public class PlayerMove : MonoBehaviour, IDamageable
         }
     }
 
-    // Æ¯¼º Àû¿ë ------------------------------------------------
+    // Æ¯ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ------------------------------------------------
 
-    [Header("Æ¯¼º Ãß°¡ ¼öÄ¡ °ª")]
+    [Header("Æ¯ï¿½ï¿½ ï¿½ß°ï¿½ ï¿½ï¿½Ä¡ ï¿½ï¿½")]
     private float bonusMoveSpeed = 0f;
     private float bonusJumpForce = 0f;
     private float bonusFireRate = 0f;
@@ -294,11 +294,14 @@ public class PlayerMove : MonoBehaviour, IDamageable
 
     // UI -------------------------------------------------------
 
-    [Header("HP ¹Ù")]
+    [Header("HP ï¿½ï¿½")]
     [SerializeField]
     private Image hpBar;
 
-    [Header("ÃÑ¾Ë Text")]
+    [SerializeField]
+    private TMP_Text hpText;
+
+    [Header("ï¿½Ñ¾ï¿½ Text")]
     [SerializeField]
     private TMP_Text ammoText;
 
@@ -307,6 +310,11 @@ public class PlayerMove : MonoBehaviour, IDamageable
         if (hpBar != null)
         {
             hpBar.fillAmount = currentHP / maxHP;
+        }
+
+        if (hpText != null)
+        {
+            hpText.text = Mathf.CeilToInt(currentHP).ToString();
         }
     }
 
@@ -318,23 +326,23 @@ public class PlayerMove : MonoBehaviour, IDamageable
         }
     }
 
-    // µ¥¹ÌÁö, °ÔÀÓ ¿À¹ö Ã³¸® ----------------------------------------
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½, ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½ ----------------------------------------
 
     public bool IsDead => currentHP <= 0;
 
     public void TakeDamage(float _damage)
     {
-        if(IsDead) // ÀÌ¹Ì Á×¾úÀ» °æ¿ì Áßº¹ ÀÛµ¿À» ¹æÁöÇÏ±â À§ÇØ
+        if(IsDead) // ï¿½Ì¹ï¿½ ï¿½×¾ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ßºï¿½ ï¿½Ûµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï±ï¿½ ï¿½ï¿½ï¿½ï¿½
         {
             return;
         }
 
         currentHP -= _damage;
-        currentHP = Mathf.Max(currentHP, 0); // currentHP °ªÀÌ À½¼ö·Î ³»·Á°¡Áö ¾Ê°Ô ÇÏ±â À§ÇÔ
+        currentHP = Mathf.Max(currentHP, 0); // currentHP ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê°ï¿½ ï¿½Ï±ï¿½ ï¿½ï¿½ï¿½ï¿½
 
         RefreshHPUI();
 
-        if (IsDead) // µ¥¹ÌÁö¸¦ ¹ÞÀº µÚ Á×¾úÀ» °æ¿ì Die¸¦ È£Ãâ
+        if (IsDead) // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½×¾ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ Dieï¿½ï¿½ È£ï¿½ï¿½
         {
             Die();
         }
@@ -346,7 +354,7 @@ public class PlayerMove : MonoBehaviour, IDamageable
     }
 
 
-    // ½Ã°£ °è»ê -----------------------------------------
+    // ï¿½Ã°ï¿½ ï¿½ï¿½ï¿½ -----------------------------------------
 
     private bool Timer(ref float timer, float time)
     {
