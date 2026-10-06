@@ -8,15 +8,15 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
 
-    [Header("����ġ, ����")]
+    [Header("경험치, 레벨")]
     public float currentEXP = 0;
     public float maxEXP = 100;
     public int currentLeve = 1;
 
-    [Header("Ư�� �����ͺ��̽�")]
+    [Header("특성 데이터베이스")]
     [SerializeField] private List<PerkData> allPerks;
 
-    [Header("UI ����")]
+    [Header("UI 연결")]
     [SerializeField] private PerkUIController perkUI;
 
     [Header("����ġ UI")]
@@ -88,17 +88,17 @@ public class GameManager : MonoBehaviour
 
     private void ShowPerkSelection()
     {
-        // 1. ��ü Ư�� ��� �� �ߺ� ���� 3�� �̱�
+        // 1. 전체 특성 목록 중 중복 없이 3개 뽑기
         List<PerkData> selectedPerks = GetRandomPerks(3);
 
-        // 2. UI ����
+        // 2. UI 띄우기
         if (perkUI != null)
         {
             perkUI.DisplayPerks(selectedPerks);
         }
     }
 
-    // �ߺ� ���� 3�� �̱� ����
+    // 중복 없는 3개 뽑기 로직
     private List<PerkData> GetRandomPerks(int count)
     {
         List<PerkData> tempList = new List<PerkData>(allPerks);
@@ -111,14 +111,14 @@ public class GameManager : MonoBehaviour
             int randomIndex = Random.Range(0, tempList.Count);
             result.Add(tempList[randomIndex]);
 
-            // �̹� ���� �׸��� �ӽ� ����Ʈ���� �����Ͽ� �ߺ� ����
+            // 이미 뽑힌 항목은 임시 리스트에서 제거하여 중복 방지
             tempList.RemoveAt(randomIndex);
         }
 
         return result;
     }
 
-    // �÷��̾ Ư���� �������� �� ȣ���
+    // 플레이어가 특성을 선택했을 때 호출됨
     public void SelectPerk(PerkData perk)
     {
         PlayerMove player = FindObjectOfType<PlayerMove>();
@@ -127,7 +127,7 @@ public class GameManager : MonoBehaviour
             player.ApplyPerk(perk);
         }
 
-        // ���� �簳 �� UI �ݱ�
+        // 게임 재개 및 UI 닫기
         Time.timeScale = 1f;
         perkUI.CloseUI();
     }
