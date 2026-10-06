@@ -210,6 +210,12 @@ public class PlayerMove : MonoBehaviour, IDamageable
                 Quaternion fireRot = Quaternion.LookRotation(finalDir);
 
                 GameObject bullet = Instantiate(bulletPrefab, MuzzleTrans.position, fireRot);
+
+                Bullet bulletComp = bullet.GetComponent<Bullet>();
+                if (bulletComp != null)
+                {
+                    bulletComp.owner = gameObject;
+                }
             }
 
             canFire = false;

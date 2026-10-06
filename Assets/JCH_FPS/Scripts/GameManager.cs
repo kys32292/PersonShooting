@@ -62,8 +62,8 @@ public class GameManager : MonoBehaviour
     public void LevelUp()
     {
         currentLeve++;
-        currentEXP -= maxEXP;
-        maxEXP = maxEXP * 1.2f;
+        currentEXP = maxEXP;
+        maxEXP = maxEXP * 1.75f;
 
         ShowPerkSelection();
     }
@@ -82,7 +82,7 @@ public class GameManager : MonoBehaviour
 
         if (expValueText != null)
         {
-            expValueText.text = Mathf.FloorToInt(currentEXP) + " / " + Mathf.CeilToInt(maxEXP);
+            expValueText.text = Mathf.FloorToInt(currentEXP) + " / " + Mathf.FloorToInt(maxEXP);
         }
     }
 

@@ -141,8 +141,7 @@ MonoBehaviour:
   damage: 10
   attackRange: 10
   attackRate: 2
-  bulletPrefab: {fileID: 3372092455280466519, guid: 8bcc893cb0b666443b3ec10effceebc5,
-    type: 3}
+  bulletPrefab: {fileID: 3372092455280466519, guid: 8bcc893cb0b666443b3ec10effceebc5, type: 3}
   firePos: {fileID: 2569886027517115714}
   wallLayer:
     serializedVersion: 2

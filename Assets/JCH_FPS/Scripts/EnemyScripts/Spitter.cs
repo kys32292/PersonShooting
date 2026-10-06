@@ -18,9 +18,9 @@ public class Spitter : EnemyBase
         }
     }
 
-    // °ø°Ý ¼öÁ¤ -----------------------------------
+    // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ -----------------------------------
 
-    [Header("ÃÑ¾Ë ÇÁ¸®ÆÕ")]
+    [Header("ï¿½Ñ¾ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½")]
     [SerializeField]
     private GameObject bulletPrefab;
     [SerializeField]
@@ -37,12 +37,17 @@ public class Spitter : EnemyBase
 
         Quaternion fireRot = Quaternion.LookRotation(fireDir);
 
-        Instantiate(bulletPrefab, firePos.position, fireRot);
+        GameObject bullet = Instantiate(bulletPrefab, firePos.position, fireRot);
+        Bullet bulletComp = bullet.GetComponent<Bullet>();
+        if (bulletComp != null)
+        {
+            bulletComp.owner = gameObject;
+        }
     }
 
-    // °¨Áö ------------------------------------------
+    // ï¿½ï¿½ï¿½ï¿½ ------------------------------------------
 
-    [Header("¿ø°Å¸® º® °¨Áö")]
+    [Header("ï¿½ï¿½ï¿½Å¸ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½")]
     [SerializeField]
     private LayerMask wallLayer;
 

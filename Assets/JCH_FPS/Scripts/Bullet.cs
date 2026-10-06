@@ -7,6 +7,8 @@ public class Bullet : MonoBehaviour
     public float bulletDamage = 10f;
     public float bulletSpeed = 10f;
 
+    [HideInInspector] public GameObject owner;
+
     Rigidbody rb;
 
     private bool isMove = true;
@@ -36,6 +38,16 @@ public class Bullet : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
+        if (owner != null && other.transform.IsChildOf(owner.transform))
+        {
+            return; // 발사한 본인(플레이어/적)과는 충돌하지 않음
+        }
+
+        if (other.TryGetComponent<Bullet>(out _))
+        {
+            return; // 같은 총구에서 동시에 나간 총알끼리는 서로 충돌하지 않음
+        }
+
         if(other.TryGetComponent<IDamageable>(out var target))
         {
             target.TakeDamage(bulletDamage);
