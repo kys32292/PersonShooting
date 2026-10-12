@@ -26,9 +26,9 @@ public class EnemyBase : MonoBehaviour, IDamageable
 
     [Header("플레이어 프리펩")]
     [SerializeField]
-    private GameObject playerPrefab;
+    public GameObject playerPrefab;
     [SerializeField]
-    protected Transform targetPlayer;
+    public Transform targetPlayer;
     private NavMeshAgent agent;
 
     // Start is called before the first frame update
@@ -49,6 +49,11 @@ public class EnemyBase : MonoBehaviour, IDamageable
     // Update is called once per frame
     protected virtual void Update()
     {
+        if (IsDead)
+        {
+            return;
+        }
+
         if (GameManager.Instance != null && GameManager.Instance.isPaused)
         {
             if (!agent.isStopped)
@@ -70,8 +75,10 @@ public class EnemyBase : MonoBehaviour, IDamageable
         {
             case EnemyState.Idle:
                 agent.isStopped = true;
+                animator.SetTrigger("Idle");
                 break;
             case EnemyState.Track:
+                animator.SetTrigger("Track");
                 agent.isStopped = false;
                 break;
             case EnemyState.Attack:
@@ -94,7 +101,7 @@ public class EnemyBase : MonoBehaviour, IDamageable
         {
             state = EnemyState.Track;
         }
-        else if(distance < attackRange)
+        else if(distance < attackRange && DetectWall())
         {
             state = EnemyState.Attack;
         }
@@ -116,7 +123,7 @@ public class EnemyBase : MonoBehaviour, IDamageable
     // 공격 ------------------------------------------------------------
 
     [SerializeField]
-    protected float damage = 10f;
+    public float damage = 10f;
     [SerializeField]
     protected float attackRange = 2f;
 
@@ -128,11 +135,42 @@ public class EnemyBase : MonoBehaviour, IDamageable
     {
         print("Attack!");
 
-        if (playerPrefab.TryGetComponent<IDamageable>(out var target))
-        {
-            target.TakeDamage(damage);
-        }
+        animator.SetTrigger("Attack");
     }
+
+    // 벽 감지 ------------------------------------------
+
+    [Header("벽 감지 레이어")]
+    [SerializeField]
+    private LayerMask wallLayer;
+
+    private bool DetectWall()
+    {
+        if (targetPlayer == null)
+        {
+            return false;
+        }
+
+        Vector3 origin = transform.position + Vector3.up * 1.5f;
+        Vector3 targetPos = targetPlayer.position + Vector3.up * 1.5f;
+
+        Vector3 dir = (targetPos - origin).normalized;
+        float distance = Vector3.Distance(origin, targetPos);
+
+        if (Physics.Raycast(origin, dir, out RaycastHit hit, distance, wallLayer))
+        {
+            print("Block!");
+            return false;
+        }
+
+        return true;
+    }
+
+    // 애니메이션 -----------------------------------------------
+
+    [Header("애니메이터")]
+    [SerializeField]
+    protected Animator animator;
 
     // 데미지, 사망 처리 ----------------------------------------
 
@@ -154,13 +192,20 @@ public class EnemyBase : MonoBehaviour, IDamageable
         }
     }
 
-    protected void Die()
+    protected virtual void Die()
     {
-        if(GameManager.Instance != null)
+        agent.isStopped = true;
+
+        if (GameManager.Instance != null)
         {
             GameManager.Instance.AddEXP(exp);
         }
 
+        animator.SetBool("IsDead", IsDead);
+    }
+
+    public void DestroyObject()
+    {
         Destroy(gameObject);
     }
 

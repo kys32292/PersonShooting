@@ -2,20 +2,15 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Spitter : EnemyBase
+public class Spitter : MonoBehaviour
 {
-    protected override void SetState()
-    {
-        float distance = Vector3.Distance(transform.position, targetPlayer.position);
+    private Animator animator;
+    [SerializeField]
+    private EnemyBase enemyBase;
 
-        if (distance < attackRange && DetectWall())
-        {
-            state = EnemyState.Attack;
-        }
-        else
-        {
-            state = EnemyState.Track;
-        }
+    private void Start()
+    {
+        animator = GetComponent<Animator>();
     }
 
     // ���� ���� -----------------------------------
@@ -26,14 +21,14 @@ public class Spitter : EnemyBase
     [SerializeField]
     private Transform firePos;
 
-    protected override void Attack()
+    protected void Spitter_Attack()
     {
-        if(targetPlayer == null)
+        if(enemyBase.targetPlayer == null)
         {
             return;
         }
 
-        Vector3 fireDir = (targetPlayer.position - firePos.position).normalized;
+        Vector3 fireDir = (enemyBase.targetPlayer.position - firePos.position).normalized;
 
         Quaternion fireRot = Quaternion.LookRotation(fireDir);
 
@@ -47,31 +42,8 @@ public class Spitter : EnemyBase
         }
     }
 
-    // ���� ------------------------------------------
-
-    [Header("���Ÿ� �� ����")]
-    [SerializeField]
-    private LayerMask wallLayer;
-
-    private bool DetectWall()
+    public void Spitter_Die()
     {
-        if (targetPlayer == null)
-        {
-            return false;
-        }
-
-        Vector3 origin = transform.position + Vector3.up * 1.5f;
-        Vector3 targetPos = targetPlayer.position + Vector3.up * 1.5f;
-
-        Vector3 dir = (targetPos - origin).normalized;
-        float distance = Vector3.Distance(origin, targetPos);
-
-        if (Physics.Raycast(origin, dir, out RaycastHit hit, distance, wallLayer))
-        {
-            print("Block!");
-            return false;
-        }
-
-        return true;
+        Destroy(transform.root.gameObject);
     }
 }
