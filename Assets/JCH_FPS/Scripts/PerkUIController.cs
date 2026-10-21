@@ -10,6 +10,9 @@ public class PerkUIController : MonoBehaviour
     [SerializeField] private List<Button> perkButtons; // 버튼 3개 연결
     [SerializeField] private List<TextMeshProUGUI> perkNameTexts; // 텍스트 3개 연결
 
+    // 2026-10-21: used by PauseMenuController to block ESC pause while perk selection is open
+    public bool IsOpen => uiPanel != null && uiPanel.activeSelf;
+
     public void DisplayPerks(List<PerkData> perks)
     {
         uiPanel.SetActive(true);

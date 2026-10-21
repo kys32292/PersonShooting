@@ -268,6 +268,166 @@ public static class HUDBuilder
         Debug.Log("Main HUD 계층 보정 완료: PerkUI/HUD_HealthExp -> HUDCanvas/HUD");
     }
 
+    // 2026-10-21: ESC 일시정지 메뉴 생성 도구. HUDCanvas 맨 위(마지막 자식)에 PauseMenu를 만들고
+    // PauseMenuController 필드를 자동 연결한다. 한글 표시를 위해 TMP 대신 legacy Text(OS 폰트 폴백) 사용.
+    // "메인 메뉴로" 버튼이 동작하도록 Title.unity를 빌드 세팅에 없으면 추가한다.
+    static readonly Color PauseDim = new Color(0f, 0f, 0f, 0.6f);
+    static readonly Color PausePanelBG = new Color(0.086f, 0.098f, 0.122f, 0.98f);
+    static readonly Color PausePanelBorder = new Color(0.22f, 0.24f, 0.28f, 1f);
+    static readonly Color PauseButtonBG = new Color(0.157f, 0.173f, 0.204f, 1f);
+    static readonly Color PauseButtonHover = new Color(0.22f, 0.24f, 0.28f, 1f);
+    static readonly Color PauseButtonBorder = new Color(0.23f, 0.25f, 0.29f, 1f);
+    static readonly Color PausePrimaryBG = new Color(0.23f, 0.33f, 0.28f, 1f);
+    static readonly Color PausePrimaryHover = new Color(0.28f, 0.40f, 0.33f, 1f);
+    static readonly Color PausePrimaryBorder = new Color(0.37f, 0.68f, 0.48f, 1f);
+    static readonly Color PauseSubText = new Color(0.55f, 0.58f, 0.62f, 1f);
+
+    [MenuItem("Tools/HUD/Build Pause Menu (Main)")]
+    public static void BuildPauseMenu()
+    {
+        var scene = EditorSceneManager.OpenScene("Assets/Scenes/Main.unity", OpenSceneMode.Single);
+
+        GameObject canvasGO = GameObject.Find("HUDCanvas");
+        if (canvasGO == null)
+        {
+            Debug.LogWarning("Main.unity에서 HUDCanvas를 찾지 못했습니다. 먼저 Build Gameplay HUD를 실행하세요.");
+            return;
+        }
+
+        if (Object.FindObjectOfType<UnityEngine.EventSystems.EventSystem>() == null)
+        {
+            new GameObject("EventSystem", typeof(UnityEngine.EventSystems.EventSystem), typeof(UnityEngine.EventSystems.StandaloneInputModule));
+        }
+
+        // Clear previous pause menu if it exists, so re-running the tool is idempotent
+        var existing = canvasGO.transform.Find("PauseMenu");
+        if (existing != null) Object.DestroyImmediate(existing.gameObject);
+
+        RectTransform root = CreateUIObject("PauseMenu", canvasGO.transform);
+        Stretch(root);
+        root.SetAsLastSibling();
+        var controller = root.gameObject.AddComponent<PauseMenuController>();
+
+        // ---- 화면 어둡게 + 클릭 차단 ----
+        RectTransform overlay = CreateUIObject("PausePanel", root);
+        Stretch(overlay);
+        overlay.gameObject.AddComponent<Image>().color = PauseDim;
+
+        Sprite rounded = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Background.psd");
+
+        // ---- 가운데 창 (테두리 + 안쪽 배경) ----
+        RectTransform window = CreateUIObject("Window", overlay);
+        window.anchorMin = window.anchorMax = window.pivot = new Vector2(0.5f, 0.5f);
+        window.sizeDelta = new Vector2(560, 0);
+        var windowBorder = window.gameObject.AddComponent<Image>();
+        windowBorder.sprite = rounded;
+        windowBorder.type = Image.Type.Sliced;
+        windowBorder.color = PausePanelBorder;
+        window.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+        var layout = window.gameObject.AddComponent<VerticalLayoutGroup>();
+        layout.padding = new RectOffset(26, 26, 28, 20);
+        layout.spacing = 14;
+        layout.childAlignment = TextAnchor.UpperCenter;
+        layout.childControlWidth = true;
+        layout.childControlHeight = true;
+        layout.childForceExpandWidth = true;
+        layout.childForceExpandHeight = false;
+
+        RectTransform windowBG = CreateUIObject("Background", window);
+        Stretch(windowBG);
+        windowBG.offsetMin = new Vector2(1, 1);
+        windowBG.offsetMax = new Vector2(-1, -1);
+        windowBG.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
+        var windowBGImg = windowBG.gameObject.AddComponent<Image>();
+        windowBGImg.sprite = rounded;
+        windowBGImg.type = Image.Type.Sliced;
+        windowBGImg.color = PausePanelBG;
+
+        // ---- 제목 ----
+        RectTransform header = CreateUIObject("Header", window);
+        header.gameObject.AddComponent<LayoutElement>().preferredHeight = 66;
+        CreateText(header, "Title", "일시정지", 34, TextWhite, FontStyle.Bold, TextAnchor.MiddleCenter,
+            new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), Vector2.zero, new Vector2(400, 44));
+        CreateText(header, "Subtitle", "PAUSED", 14, PauseSubText, FontStyle.Normal, TextAnchor.MiddleCenter,
+            new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), Vector2.zero, new Vector2(400, 20));
+
+        // ---- 버튼 ----
+        Button resume = CreatePauseButton(window, rounded, "ResumeButton", "게임 계속하기", PausePrimaryBG, PausePrimaryHover, PausePrimaryBorder);
+        Button settings = CreatePauseButton(window, rounded, "SettingsButton", "설정", PauseButtonBG, PauseButtonHover, PauseButtonBorder);
+        Button mainMenu = CreatePauseButton(window, rounded, "MainMenuButton", "메인 메뉴로 돌아가기", PauseButtonBG, PauseButtonHover, PauseButtonBorder);
+        Button quit = CreatePauseButton(window, rounded, "QuitButton", "게임 종료", PauseButtonBG, PauseButtonHover, PauseButtonBorder);
+
+        // ---- 하단 안내 ----
+        RectTransform footer = CreateUIObject("Footer", window);
+        footer.gameObject.AddComponent<LayoutElement>().preferredHeight = 24;
+        CreateText(footer, "Hint", "ESC — 게임으로 돌아가기", 15, PauseSubText, FontStyle.Normal, TextAnchor.MiddleCenter,
+            Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
+
+        var so = new SerializedObject(controller);
+        so.FindProperty("pausePanel").objectReferenceValue = overlay.gameObject;
+        so.FindProperty("resumeButton").objectReferenceValue = resume;
+        so.FindProperty("settingsButton").objectReferenceValue = settings;
+        so.FindProperty("mainMenuButton").objectReferenceValue = mainMenu;
+        so.FindProperty("quitButton").objectReferenceValue = quit;
+        so.ApplyModifiedPropertiesWithoutUndo();
+
+        // 에디터에서 보기 편하도록 생성 직후엔 꺼둠 (런타임 Awake에서도 꺼짐)
+        overlay.gameObject.SetActive(false);
+
+        AddSceneToBuildSettings("Assets/Scenes/Title.unity");
+
+        EditorSceneManager.MarkSceneDirty(scene);
+        EditorSceneManager.SaveScene(scene);
+        Debug.Log("일시정지 메뉴 생성 및 연결 완료: Assets/Scenes/Main.unity (HUDCanvas/PauseMenu)");
+    }
+
+    static Button CreatePauseButton(RectTransform parent, Sprite sprite, string name, string label, Color normal, Color hover, Color border)
+    {
+        RectTransform rt = CreateUIObject(name, parent);
+        rt.gameObject.AddComponent<LayoutElement>().preferredHeight = 64;
+        var borderImg = rt.gameObject.AddComponent<Image>();
+        borderImg.sprite = sprite;
+        borderImg.type = Image.Type.Sliced;
+        borderImg.color = border;
+
+        RectTransform bg = CreateUIObject("Background", rt);
+        Stretch(bg);
+        bg.offsetMin = new Vector2(1, 1);
+        bg.offsetMax = new Vector2(-1, -1);
+        var bgImg = bg.gameObject.AddComponent<Image>();
+        bgImg.sprite = sprite;
+        bgImg.type = Image.Type.Sliced;
+        bgImg.color = Color.white; // 실제 색은 Button ColorBlock 틴트로 결정
+
+        var button = rt.gameObject.AddComponent<Button>();
+        button.targetGraphic = bgImg;
+        var colors = button.colors;
+        colors.normalColor = normal;
+        colors.highlightedColor = hover;
+        colors.selectedColor = hover;
+        colors.pressedColor = normal * 0.85f;
+        colors.disabledColor = normal * 0.6f;
+        colors.colorMultiplier = 1f;
+        colors.fadeDuration = 0.08f;
+        button.colors = colors;
+
+        CreateText(bg, "Label", label, 20, TextWhite, FontStyle.Bold, TextAnchor.MiddleCenter,
+            Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
+        return button;
+    }
+
+    static void AddSceneToBuildSettings(string path)
+    {
+        if (AssetDatabase.LoadAssetAtPath<SceneAsset>(path) == null) return;
+
+        var scenes = new System.Collections.Generic.List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
+        if (scenes.Exists(s => s.path == path)) return;
+
+        scenes.Add(new EditorBuildSettingsScene(path, true));
+        EditorBuildSettings.scenes = scenes.ToArray();
+    }
+
     static GameObject FindRootInScene(Scene scene, string name)
     {
         foreach (var go in scene.GetRootGameObjects())
