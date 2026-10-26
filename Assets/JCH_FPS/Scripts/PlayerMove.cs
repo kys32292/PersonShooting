@@ -228,7 +228,7 @@ public class PlayerMove : MonoBehaviour, IDamageable
 
     private void Reload()
     {
-        if (Input.GetKeyDown(KeyCode.R) && !isReloading)
+        if (Input.GetKeyDown(KeyCode.R) && !isReloading || currentAmmo <= 0)
         {
             canFire = false;
             isReloading = true;

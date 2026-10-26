@@ -17,6 +17,11 @@ public class PerkUIController : MonoBehaviour
     {
         uiPanel.SetActive(true);
 
+        if(GameManager.Instance != null)
+        {
+            GameManager.Instance.isPaused = true;
+        }
+
         for (int i = 0; i < perkButtons.Count; i++)
         {
             if (i < perks.Count)
@@ -40,5 +45,10 @@ public class PerkUIController : MonoBehaviour
     public void CloseUI()
     {
         uiPanel.SetActive(false);
+
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.isPaused = false;
+        }
     }
 }

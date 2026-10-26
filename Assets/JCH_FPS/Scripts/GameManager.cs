@@ -27,6 +27,10 @@ public class GameManager : MonoBehaviour
 
     private PlayerMove playerPrefab;
 
+    [Header("Paused Panel")]
+    [SerializeField]
+    private GameObject ESCPausePanel;
+
     public bool isPaused = false;
 
     private void Awake()
@@ -41,6 +45,23 @@ public class GameManager : MonoBehaviour
         perkUI.CloseUI();
 
         RefreshEXPUI(); // 2026-10-06: 시작 시 경험치 바 초기값 표시
+    }
+
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            if (ESCPausePanel.activeSelf == false)
+            {
+                ESCPausePanel.SetActive(true);
+                isPaused = true;
+            }
+            else
+            {
+                ESCPausePanel.SetActive(false);
+                isPaused = false;
+            }
+        }
     }
 
     public void GameStarted()
