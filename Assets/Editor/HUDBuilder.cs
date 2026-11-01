@@ -370,6 +370,8 @@ public static class HUDBuilder
         so.FindProperty("settingsButton").objectReferenceValue = settings;
         so.FindProperty("mainMenuButton").objectReferenceValue = mainMenu;
         so.FindProperty("quitButton").objectReferenceValue = quit;
+        // 2026-11-01: 타이틀과 같은 설정 창을 일시정지 메뉴 위에 띄움
+        so.FindProperty("settingsPanel").objectReferenceValue = BuildSettingsPanel(root, rounded);
         so.ApplyModifiedPropertiesWithoutUndo();
 
         // 에디터에서 보기 편하도록 생성 직후엔 꺼둠 (런타임 Awake에서도 꺼짐)
@@ -380,6 +382,368 @@ public static class HUDBuilder
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
         Debug.Log("일시정지 메뉴 생성 및 연결 완료: Assets/Scenes/Main.unity (HUDCanvas/PauseMenu)");
+    }
+
+    // 2026-11-01: 타이틀 화면 생성 도구. Title.unity에 TitleCanvas(배경/제목/게임 시작·설정·종료 버튼/설정 창)를 만들고
+    // TitleMenuController 필드를 자동 연결한다. 배경 이미지는 코드로 그려 Assets/Art/UI/TitleBG.png로 저장한다.
+    // 실행 파일이 타이틀부터 시작하도록 Title.unity를 빌드 세팅 0번으로 옮긴다.
+    const string TitleScenePath = "Assets/Scenes/Title.unity";
+    const string TitleBGPath = "Assets/Art/UI/TitleBG.png";
+    static readonly Color TitleAccent = new Color(0.85f, 0.12f, 0.10f, 1f);
+    static readonly Color TitlePrimaryBG = new Color(0.45f, 0.09f, 0.08f, 1f);
+    static readonly Color TitlePrimaryHover = new Color(0.60f, 0.12f, 0.10f, 1f);
+    static readonly Color TitlePrimaryBorder = new Color(0.90f, 0.25f, 0.20f, 1f);
+
+    [MenuItem("Tools/HUD/Build Title Menu")]
+    public static void BuildTitleMenu()
+    {
+        Sprite bgSprite = GenerateTitleBackground(TitleBGPath);
+
+        var scene = EditorSceneManager.OpenScene(TitleScenePath, OpenSceneMode.Single);
+
+        if (Object.FindObjectOfType<UnityEngine.EventSystems.EventSystem>() == null)
+        {
+            new GameObject("EventSystem", typeof(UnityEngine.EventSystems.EventSystem), typeof(UnityEngine.EventSystems.StandaloneInputModule));
+        }
+
+        var cam = Object.FindObjectOfType<Camera>();
+        if (cam != null)
+        {
+            cam.clearFlags = CameraClearFlags.SolidColor;
+            cam.backgroundColor = Color.black;
+        }
+
+        // Clear previous title canvas if it exists, so re-running the tool is idempotent
+        var existing = FindRootInScene(scene, "TitleCanvas");
+        if (existing != null) Object.DestroyImmediate(existing);
+
+        var canvasGO = new GameObject("TitleCanvas", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+        canvasGO.GetComponent<Canvas>().renderMode = RenderMode.ScreenSpaceOverlay;
+        var scaler = canvasGO.GetComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920, 1080);
+        scaler.matchWidthOrHeight = 0.5f;
+        var root = canvasGO.GetComponent<RectTransform>();
+        var controller = canvasGO.AddComponent<TitleMenuController>();
+
+        // ---- 배경 (화면 비율이 달라도 꽉 차게) ----
+        RectTransform bg = CreateUIObject("Background", root);
+        bg.anchorMin = bg.anchorMax = bg.pivot = new Vector2(0.5f, 0.5f);
+        bg.gameObject.AddComponent<Image>().sprite = bgSprite;
+        var fitter = bg.gameObject.AddComponent<AspectRatioFitter>();
+        fitter.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
+        fitter.aspectRatio = 16f / 9f;
+
+        // ---- 제목 ----
+        RectTransform titleGroup = CreateUIObject("TitleGroup", root);
+        titleGroup.anchorMin = titleGroup.anchorMax = titleGroup.pivot = new Vector2(0f, 0.5f);
+        titleGroup.anchoredPosition = new Vector2(160, 200);
+        titleGroup.sizeDelta = new Vector2(1000, 200);
+
+        Text title = CreateText(titleGroup, "GameTitle", "PERSON<color=#D91F1A>SHOOTING</color>", 124, TextWhite, FontStyle.Bold, TextAnchor.LowerLeft,
+            new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f), Vector2.zero, new Vector2(1000, 140));
+        var shadow = title.gameObject.AddComponent<Shadow>();
+        shadow.effectColor = new Color(0f, 0f, 0f, 0.8f);
+        shadow.effectDistance = new Vector2(4, -4);
+
+        RectTransform accent = CreateUIObject("AccentBar", titleGroup);
+        accent.anchorMin = accent.anchorMax = accent.pivot = new Vector2(0f, 1f);
+        accent.anchoredPosition = new Vector2(6, -152);
+        accent.sizeDelta = new Vector2(140, 5);
+        accent.gameObject.AddComponent<Image>().color = TitleAccent;
+
+        CreateText(titleGroup, "Subtitle", "WAVE SURVIVAL  ·  FIRST PERSON SHOOTER", 20, PauseSubText, FontStyle.Bold, TextAnchor.UpperLeft,
+            new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(6, -170), new Vector2(800, 28));
+
+        // ---- 메뉴 버튼 ----
+        Sprite rounded = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Background.psd");
+
+        RectTransform menu = CreateUIObject("Menu", root);
+        menu.anchorMin = menu.anchorMax = new Vector2(0f, 0.5f);
+        menu.pivot = new Vector2(0f, 1f);
+        menu.anchoredPosition = new Vector2(166, 30);
+        menu.sizeDelta = new Vector2(400, 0);
+        menu.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+        var menuLayout = menu.gameObject.AddComponent<VerticalLayoutGroup>();
+        menuLayout.spacing = 14;
+        menuLayout.childControlWidth = true;
+        menuLayout.childControlHeight = true;
+        menuLayout.childForceExpandWidth = true;
+        menuLayout.childForceExpandHeight = false;
+
+        Button start = CreatePauseButton(menu, rounded, "StartButton", "게임 시작", TitlePrimaryBG, TitlePrimaryHover, TitlePrimaryBorder);
+        Button settings = CreatePauseButton(menu, rounded, "SettingsButton", "설정", PauseButtonBG, PauseButtonHover, PauseButtonBorder);
+        Button quit = CreatePauseButton(menu, rounded, "QuitButton", "종료", PauseButtonBG, PauseButtonHover, PauseButtonBorder);
+
+        CreateText(root, "Version", "v" + PlayerSettings.bundleVersion, 16, PauseSubText, FontStyle.Normal, TextAnchor.LowerRight,
+            new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(1f, 0f), new Vector2(-30, 24), new Vector2(300, 24));
+
+        // ---- 설정 창 ----
+        GameObject settingsPanel = BuildSettingsPanel(root, rounded);
+
+        var so = new SerializedObject(controller);
+        so.FindProperty("startButton").objectReferenceValue = start;
+        so.FindProperty("settingsButton").objectReferenceValue = settings;
+        so.FindProperty("quitButton").objectReferenceValue = quit;
+        so.FindProperty("settingsPanel").objectReferenceValue = settingsPanel;
+        so.ApplyModifiedPropertiesWithoutUndo();
+
+        // 타이틀을 빌드 세팅 맨 앞으로 (실행 시 첫 씬)
+        var scenes = new System.Collections.Generic.List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
+        scenes.RemoveAll(s => s.path == TitleScenePath);
+        scenes.Insert(0, new EditorBuildSettingsScene(TitleScenePath, true));
+        EditorBuildSettings.scenes = scenes.ToArray();
+
+        EditorSceneManager.MarkSceneDirty(scene);
+        EditorSceneManager.SaveScene(scene);
+        Debug.Log("타이틀 화면 생성 및 연결 완료: " + TitleScenePath + " (TitleCanvas)");
+    }
+
+    // 타이틀/일시정지 메뉴 공용 설정 창. SettingsPanelController까지 붙여 연결하고 꺼진 상태로 반환한다.
+    static GameObject BuildSettingsPanel(RectTransform root, Sprite rounded)
+    {
+        RectTransform overlay = CreateUIObject("SettingsPanel", root);
+        Stretch(overlay);
+        overlay.gameObject.AddComponent<Image>().color = PauseDim;
+
+        RectTransform window = CreateUIObject("Window", overlay);
+        window.anchorMin = window.anchorMax = window.pivot = new Vector2(0.5f, 0.5f);
+        window.sizeDelta = new Vector2(640, 0);
+        var windowBorder = window.gameObject.AddComponent<Image>();
+        windowBorder.sprite = rounded;
+        windowBorder.type = Image.Type.Sliced;
+        windowBorder.color = PausePanelBorder;
+        window.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+        var layout = window.gameObject.AddComponent<VerticalLayoutGroup>();
+        layout.padding = new RectOffset(32, 32, 28, 24);
+        layout.spacing = 12;
+        layout.childControlWidth = true;
+        layout.childControlHeight = true;
+        layout.childForceExpandWidth = true;
+        layout.childForceExpandHeight = false;
+
+        RectTransform windowBG = CreateUIObject("Background", window);
+        Stretch(windowBG);
+        windowBG.offsetMin = new Vector2(1, 1);
+        windowBG.offsetMax = new Vector2(-1, -1);
+        windowBG.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
+        var windowBGImg = windowBG.gameObject.AddComponent<Image>();
+        windowBGImg.sprite = rounded;
+        windowBGImg.type = Image.Type.Sliced;
+        windowBGImg.color = PausePanelBG;
+
+        RectTransform header = CreateUIObject("Header", window);
+        header.gameObject.AddComponent<LayoutElement>().preferredHeight = 66;
+        CreateText(header, "Title", "설정", 34, TextWhite, FontStyle.Bold, TextAnchor.MiddleCenter,
+            new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), Vector2.zero, new Vector2(400, 44));
+        CreateText(header, "Subtitle", "SETTINGS", 14, PauseSubText, FontStyle.Normal, TextAnchor.MiddleCenter,
+            new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), Vector2.zero, new Vector2(400, 20));
+
+        var res = new DefaultControls.Resources
+        {
+            standard = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd"),
+            background = rounded,
+            knob = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd"),
+            checkmark = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Checkmark.psd"),
+        };
+
+        Slider sensSlider = CreateSettingSlider(window, res, "MouseSensitivity", "마우스 감도", out Text sensValue);
+        Slider volSlider = CreateSettingSlider(window, res, "MasterVolume", "마스터 볼륨", out Text volValue);
+
+        RectTransform fsRow = CreateSettingRow(window, "Fullscreen", "전체 화면");
+        GameObject toggleGO = DefaultControls.CreateToggle(res);
+        toggleGO.name = "Toggle";
+        Object.DestroyImmediate(toggleGO.transform.Find("Label").gameObject);
+        var toggleRT = toggleGO.GetComponent<RectTransform>();
+        toggleRT.SetParent(fsRow, false);
+        toggleRT.anchorMin = toggleRT.anchorMax = toggleRT.pivot = new Vector2(1f, 0.5f);
+        toggleRT.anchoredPosition = new Vector2(-4, 0);
+        toggleRT.sizeDelta = new Vector2(32, 32);
+        var toggleBG = toggleGO.transform.Find("Background").GetComponent<RectTransform>();
+        Stretch(toggleBG);
+        toggleBG.GetComponent<Image>().color = PauseButtonBG;
+        var check = toggleBG.Find("Checkmark").GetComponent<Image>();
+        check.color = TitlePrimaryBorder;
+        Toggle fullscreen = toggleGO.GetComponent<Toggle>();
+
+        RectTransform spacer = CreateUIObject("Spacer", window);
+        spacer.gameObject.AddComponent<LayoutElement>().preferredHeight = 4;
+
+        Button close = CreatePauseButton(window, rounded, "CloseButton", "닫기", PauseButtonBG, PauseButtonHover, PauseButtonBorder);
+
+        RectTransform footer = CreateUIObject("Footer", window);
+        footer.gameObject.AddComponent<LayoutElement>().preferredHeight = 24;
+        CreateText(footer, "Hint", "ESC — 닫기", 15, PauseSubText, FontStyle.Normal, TextAnchor.MiddleCenter,
+            Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
+
+        var panelController = overlay.gameObject.AddComponent<SettingsPanelController>();
+        var so = new SerializedObject(panelController);
+        so.FindProperty("sensitivitySlider").objectReferenceValue = sensSlider;
+        so.FindProperty("sensitivityValueText").objectReferenceValue = sensValue;
+        so.FindProperty("volumeSlider").objectReferenceValue = volSlider;
+        so.FindProperty("volumeValueText").objectReferenceValue = volValue;
+        so.FindProperty("fullscreenToggle").objectReferenceValue = fullscreen;
+        so.FindProperty("closeButton").objectReferenceValue = close;
+        so.ApplyModifiedPropertiesWithoutUndo();
+
+        overlay.gameObject.SetActive(false);
+        return overlay.gameObject;
+    }
+
+    static RectTransform CreateSettingRow(RectTransform parent, string name, string label)
+    {
+        RectTransform row = CreateUIObject(name + "Row", parent);
+        row.gameObject.AddComponent<LayoutElement>().preferredHeight = 52;
+        CreateText(row, "Label", label, 20, TextWhite, FontStyle.Bold, TextAnchor.MiddleLeft,
+            new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(4, 0), new Vector2(200, 40));
+        return row;
+    }
+
+    static Slider CreateSettingSlider(RectTransform parent, DefaultControls.Resources res, string name, string label, out Text valueText)
+    {
+        RectTransform row = CreateSettingRow(parent, name, label);
+
+        valueText = CreateText(row, "Value", "", 18, TextGray, FontStyle.Bold, TextAnchor.MiddleRight,
+            new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-4, 0), new Vector2(64, 40));
+
+        GameObject sliderGO = DefaultControls.CreateSlider(res);
+        sliderGO.name = "Slider";
+        var rt = sliderGO.GetComponent<RectTransform>();
+        rt.SetParent(row, false);
+        rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(1f, 0.5f);
+        rt.anchoredPosition = new Vector2(-84, 0);
+        rt.sizeDelta = new Vector2(280, 20);
+
+        sliderGO.transform.Find("Background").GetComponent<Image>().color = PauseButtonBG;
+        sliderGO.transform.Find("Fill Area/Fill").GetComponent<Image>().color = TitleAccent;
+        sliderGO.transform.Find("Handle Slide Area/Handle").GetComponent<Image>().color = TextWhite;
+
+        var slider = sliderGO.GetComponent<Slider>();
+        var colors = slider.colors;
+        colors.highlightedColor = new Color(1f, 0.85f, 0.85f, 1f);
+        colors.selectedColor = colors.highlightedColor;
+        slider.colors = colors;
+        return slider;
+    }
+
+    // 어두운 배경 + 붉은 지평선 빛 + 원근 바닥 격자 + 조준선 + 스캔라인/비네트를 코드로 그려 PNG로 저장
+    static Sprite GenerateTitleBackground(string path)
+    {
+        const int W = 1920, H = 1080;
+        const float horizon = 0.40f;
+        var focus = new Vector2(0.70f, horizon);
+        var tex = new Texture2D(W, H, TextureFormat.RGB24, false);
+        var pixels = new Color32[W * H];
+        var rng = new System.Random(1102);
+
+        Color top = new Color(0.020f, 0.024f, 0.035f);
+        Color bottom = new Color(0.060f, 0.062f, 0.075f);
+        Color glow = new Color(0.80f, 0.09f, 0.06f);
+        Color grid = new Color(0.55f, 0.16f, 0.13f);
+
+        for (int y = 0; y < H; y++)
+        {
+            float v = (y + 0.5f) / H;
+            for (int x = 0; x < W; x++)
+            {
+                float u = (x + 0.5f) / W;
+                Color c = Color.Lerp(bottom, top, v);
+
+                // 지평선 붉은 빛
+                float gx = (u - focus.x) / 0.50f;
+                float gy = (v - focus.y) / 0.22f;
+                c += glow * (Mathf.Exp(-(gx * gx + gy * gy) * 1.6f) * 0.55f);
+                c += glow * (Mathf.Exp(-Mathf.Abs(v - horizon) * 90f) * 0.35f * Mathf.Exp(-gx * gx * 0.6f));
+
+                // 원근 바닥 격자
+                float z = horizon - v;
+                if (z > 0.002f)
+                {
+                    float fx = (u - focus.x) * (16f / 9f) / z * 0.9f;
+                    float pxX = 0.9f * (16f / 9f) / (z * W);
+                    float lineX = 1f - Mathf.Clamp01(Mathf.Abs(fx - Mathf.Round(fx)) / (pxX * 2.5f));
+                    float fz = 0.35f / z;
+                    float pxZ = 0.35f / (z * z * H);
+                    float lineZ = pxZ < 0.5f ? 1f - Mathf.Clamp01(Mathf.Abs(fz - Mathf.Round(fz)) / (pxZ * 2.5f)) : 0f;
+                    float fade = Mathf.SmoothStep(0f, 0.30f, z) * 0.9f + 0.1f;
+                    c += grid * (Mathf.Max(lineX, lineZ) * 0.45f * fade);
+                }
+
+                // 조준선 (원 + 십자 눈금)
+                float ax = (u - focus.x) * (16f / 9f);
+                float ay = v - (focus.y + 0.10f);
+                float r = Mathf.Sqrt(ax * ax + ay * ay);
+                float px = 1f / H;
+                float ring = 1f - Mathf.Clamp01(Mathf.Abs(r - 0.17f) / (px * 1.5f));
+                float ring2 = (1f - Mathf.Clamp01(Mathf.Abs(r - 0.205f) / (px * 1.0f))) * 0.5f;
+                float tick = 0f;
+                if (r > 0.12f && r < 0.25f)
+                {
+                    tick = Mathf.Max(1f - Mathf.Clamp01(Mathf.Abs(ax) / (px * 1.5f)), 1f - Mathf.Clamp01(Mathf.Abs(ay) / (px * 1.5f)));
+                }
+                float dot = 1f - Mathf.Clamp01((r - px * 3f) / (px * 1.5f));
+                c += new Color(0.95f, 0.35f, 0.30f) * (Mathf.Max(Mathf.Max(ring, ring2), Mathf.Max(tick, dot)) * 0.28f);
+
+                // 왼쪽은 글자가 잘 보이도록 어둡게
+                c *= Mathf.Lerp(0.45f, 1f, Mathf.SmoothStep(0.05f, 0.65f, u));
+
+                // 비네트
+                float vx = (u - 0.5f) * 1.6f, vy = (v - 0.5f) * 1.9f;
+                c *= Mathf.Clamp01(1f - Mathf.Pow(vx * vx + vy * vy, 1.3f) * 0.55f);
+
+                // 스캔라인 + 노이즈
+                if (y % 3 == 0) c *= 0.88f;
+                float n = ((float)rng.NextDouble() - 0.5f) * 0.025f;
+                c += new Color(n, n, n);
+
+                pixels[y * W + x] = (Color32)c;
+            }
+        }
+
+        tex.SetPixels32(pixels);
+        tex.Apply();
+
+        System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path));
+        System.IO.File.WriteAllBytes(path, tex.EncodeToPNG());
+        Object.DestroyImmediate(tex);
+        AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
+
+        var importer = (TextureImporter)AssetImporter.GetAtPath(path);
+        importer.textureType = TextureImporterType.Sprite;
+        importer.spriteImportMode = SpriteImportMode.Single;
+        importer.mipmapEnabled = false;
+        importer.maxTextureSize = 2048;
+        importer.SaveAndReimport();
+
+        return AssetDatabase.LoadAssetAtPath<Sprite>(path);
+    }
+
+    // 2026-11-01: 이미 만들어진 Main의 일시정지 메뉴는 그대로 두고 설정 창만 추가/교체해서 연결
+    [MenuItem("Tools/HUD/Add Settings Panel To Pause Menu (Main)")]
+    public static void AddSettingsPanelToPauseMenu()
+    {
+        var scene = EditorSceneManager.OpenScene("Assets/Scenes/Main.unity", OpenSceneMode.Single);
+
+        var controller = Object.FindObjectOfType<PauseMenuController>(true);
+        if (controller == null)
+        {
+            Debug.LogWarning("Main.unity에서 PauseMenuController를 찾지 못했습니다. 먼저 Build Pause Menu (Main)를 실행하세요.");
+            return;
+        }
+
+        var root = (RectTransform)controller.transform;
+        var existing = root.Find("SettingsPanel");
+        if (existing != null) Object.DestroyImmediate(existing.gameObject);
+
+        Sprite rounded = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Background.psd");
+        var so = new SerializedObject(controller);
+        so.FindProperty("settingsPanel").objectReferenceValue = BuildSettingsPanel(root, rounded);
+        so.ApplyModifiedPropertiesWithoutUndo();
+
+        EditorSceneManager.MarkSceneDirty(scene);
+        EditorSceneManager.SaveScene(scene);
+        Debug.Log("일시정지 메뉴에 설정 창 연결 완료: Assets/Scenes/Main.unity (PauseMenu/SettingsPanel)");
     }
 
     static Button CreatePauseButton(RectTransform parent, Sprite sprite, string name, string label, Color normal, Color hover, Color border)

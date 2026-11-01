@@ -24,6 +24,7 @@ public class PlayerMove : MonoBehaviour, IDamageable
         col = GetComponent<Collider>();
 
         mainCamera = Camera.main;
+        mouseSensitivity = GameSettings.MouseSensitivity; // 2026-11-01: 타이틀 설정 화면 값 적용
 
         currentHP = maxHP;
         currentAmmo = magazineSize;
