@@ -33,6 +33,15 @@ public class GameManager : MonoBehaviour
 
     public bool isPaused = false;
 
+    // 2026-11-07: 엔딩 화면용 이번 판 기록
+    [Header("엔딩 씬 이름")]
+    [SerializeField] private string endingSceneName = "Ending";
+
+    private float survivalTime = 0f;
+    private float totalEXP = 0f; // 레벨업 때 잘리는 초과분까지 포함한 획득 경험치 총합 (= 점수)
+    private readonly List<PerkData> selectedPerks = new List<PerkData>();
+    private bool isGameOver = false;
+
     private void Awake()
     {
         if(Instance == null)
@@ -49,6 +58,11 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
+        if (!isPaused && !isGameOver)
+        {
+            survivalTime += Time.deltaTime;
+        }
+
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             if (ESCPausePanel.activeSelf == false)
@@ -72,6 +86,7 @@ public class GameManager : MonoBehaviour
     public void AddEXP(float exp)
     {
         currentEXP += exp;
+        totalEXP += exp;
 
         if(currentEXP >= maxEXP)
         {
@@ -151,15 +166,23 @@ public class GameManager : MonoBehaviour
         {
             player.ApplyPerk(perk);
         }
+        selectedPerks.Add(perk);
 
         // 게임 재개 및 UI 닫기
         Time.timeScale = 1f;
         perkUI.CloseUI();
     }
 
+    // 2026-11-07: 기록을 RunResult에 넘기고 엔딩 씬으로 이동
     public void GameOver()
     {
+        if (isGameOver) return;
+        isGameOver = true;
 
+        RunResult.Set(survivalTime, totalEXP, currentLeve, selectedPerks);
+
+        Time.timeScale = 1f;
+        UnityEngine.SceneManagement.SceneManager.LoadScene(endingSceneName);
     }
 
     private void ResetData()

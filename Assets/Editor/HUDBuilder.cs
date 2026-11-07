@@ -719,6 +719,192 @@ public static class HUDBuilder
         return AssetDatabase.LoadAssetAtPath<Sprite>(path);
     }
 
+    // 2026-11-07: 엔딩(게임 오버) 화면 생성 도구. Ending.unity를 새로 만들고(있으면 EndingCanvas만 교체)
+    // 생존 시간/점수/레벨, 선택한 빌드(특성) 목록, 타이틀로 돌아가기 버튼을 만들어 EndingController에 연결한다.
+    const string EndingScenePath = "Assets/Scenes/Ending.unity";
+
+    [MenuItem("Tools/HUD/Build Ending Scene")]
+    public static void BuildEndingScene()
+    {
+        Sprite bgSprite = AssetDatabase.LoadAssetAtPath<Sprite>(TitleBGPath);
+        if (bgSprite == null) bgSprite = GenerateTitleBackground(TitleBGPath);
+
+        Scene scene;
+        if (AssetDatabase.LoadAssetAtPath<SceneAsset>(EndingScenePath) != null)
+        {
+            scene = EditorSceneManager.OpenScene(EndingScenePath, OpenSceneMode.Single);
+        }
+        else
+        {
+            scene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
+            EditorSceneManager.SaveScene(scene, EndingScenePath);
+        }
+
+        if (Object.FindObjectOfType<UnityEngine.EventSystems.EventSystem>() == null)
+        {
+            new GameObject("EventSystem", typeof(UnityEngine.EventSystems.EventSystem), typeof(UnityEngine.EventSystems.StandaloneInputModule));
+        }
+
+        var cam = Object.FindObjectOfType<Camera>();
+        if (cam != null)
+        {
+            cam.clearFlags = CameraClearFlags.SolidColor;
+            cam.backgroundColor = Color.black;
+        }
+
+        // Clear previous ending canvas if it exists, so re-running the tool is idempotent
+        var existing = FindRootInScene(scene, "EndingCanvas");
+        if (existing != null) Object.DestroyImmediate(existing);
+
+        var canvasGO = new GameObject("EndingCanvas", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+        canvasGO.GetComponent<Canvas>().renderMode = RenderMode.ScreenSpaceOverlay;
+        var scaler = canvasGO.GetComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920, 1080);
+        scaler.matchWidthOrHeight = 0.5f;
+        var root = canvasGO.GetComponent<RectTransform>();
+        var controller = canvasGO.AddComponent<EndingController>();
+
+        // ---- 배경 (타이틀 배경 재사용 + 어둡게) ----
+        RectTransform bg = CreateUIObject("Background", root);
+        bg.anchorMin = bg.anchorMax = bg.pivot = new Vector2(0.5f, 0.5f);
+        bg.gameObject.AddComponent<Image>().sprite = bgSprite;
+        var fitter = bg.gameObject.AddComponent<AspectRatioFitter>();
+        fitter.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
+        fitter.aspectRatio = 16f / 9f;
+
+        RectTransform dim = CreateUIObject("Dim", root);
+        Stretch(dim);
+        dim.gameObject.AddComponent<Image>().color = new Color(0f, 0f, 0f, 0.45f);
+
+        Sprite rounded = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Background.psd");
+
+        // ---- 가운데 창 ----
+        RectTransform window = CreateUIObject("Window", root);
+        window.anchorMin = window.anchorMax = window.pivot = new Vector2(0.5f, 0.5f);
+        window.sizeDelta = new Vector2(840, 0);
+        var windowBorder = window.gameObject.AddComponent<Image>();
+        windowBorder.sprite = rounded;
+        windowBorder.type = Image.Type.Sliced;
+        windowBorder.color = PausePanelBorder;
+        window.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+        var layout = window.gameObject.AddComponent<VerticalLayoutGroup>();
+        layout.padding = new RectOffset(40, 40, 32, 32);
+        layout.spacing = 18;
+        layout.childControlWidth = true;
+        layout.childControlHeight = true;
+        layout.childForceExpandWidth = true;
+        layout.childForceExpandHeight = false;
+
+        RectTransform windowBG = CreateUIObject("Background", window);
+        Stretch(windowBG);
+        windowBG.offsetMin = new Vector2(1, 1);
+        windowBG.offsetMax = new Vector2(-1, -1);
+        windowBG.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
+        var windowBGImg = windowBG.gameObject.AddComponent<Image>();
+        windowBGImg.sprite = rounded;
+        windowBGImg.type = Image.Type.Sliced;
+        windowBGImg.color = PausePanelBG;
+
+        // ---- 제목 ----
+        RectTransform header = CreateUIObject("Header", window);
+        header.gameObject.AddComponent<LayoutElement>().preferredHeight = 112;
+        Text gameOver = CreateText(header, "Title", "GAME OVER", 76, TitleAccent, FontStyle.Bold, TextAnchor.UpperCenter,
+            new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), Vector2.zero, new Vector2(700, 86));
+        var shadow = gameOver.gameObject.AddComponent<Shadow>();
+        shadow.effectColor = new Color(0f, 0f, 0f, 0.8f);
+        shadow.effectDistance = new Vector2(3, -3);
+        CreateText(header, "Subtitle", "이번 생존 기록", 18, PauseSubText, FontStyle.Normal, TextAnchor.LowerCenter,
+            new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), Vector2.zero, new Vector2(400, 24));
+
+        // ---- 기록 카드 3개 ----
+        RectTransform stats = CreateUIObject("Stats", window);
+        stats.gameObject.AddComponent<LayoutElement>().preferredHeight = 126;
+        var statsLayout = stats.gameObject.AddComponent<HorizontalLayoutGroup>();
+        statsLayout.spacing = 16;
+        statsLayout.childControlWidth = true;
+        statsLayout.childControlHeight = true;
+        statsLayout.childForceExpandWidth = true;
+        statsLayout.childForceExpandHeight = true;
+
+        Text survivalValue = CreateStatCard(stats, rounded, "SurvivalTime", "생존 시간", "00:00");
+        Text scoreValue = CreateStatCard(stats, rounded, "Score", "점수 (EXP)", "0");
+        Text levelValue = CreateStatCard(stats, rounded, "Level", "도달 레벨", "Lv. 1");
+
+        // ---- 선택한 빌드 ----
+        RectTransform buildHeader = CreateUIObject("BuildHeader", window);
+        buildHeader.gameObject.AddComponent<LayoutElement>().preferredHeight = 30;
+        CreateText(buildHeader, "Label", "선택한 빌드", 22, TextWhite, FontStyle.Bold, TextAnchor.MiddleLeft,
+            Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), new Vector2(4, 0), Vector2.zero);
+
+        RectTransform perkGrid = CreateUIObject("PerkList", window);
+        var grid = perkGrid.gameObject.AddComponent<GridLayoutGroup>();
+        grid.cellSize = new Vector2(372, 48);
+        grid.spacing = new Vector2(16, 12);
+        grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+        grid.constraintCount = 2;
+
+        RectTransform template = CreateUIObject("PerkEntryTemplate", perkGrid);
+        var chipImg = template.gameObject.AddComponent<Image>();
+        chipImg.sprite = rounded;
+        chipImg.type = Image.Type.Sliced;
+        chipImg.color = PauseButtonBG;
+        RectTransform chipBar = CreateUIObject("Accent", template);
+        chipBar.anchorMin = new Vector2(0f, 0f);
+        chipBar.anchorMax = new Vector2(0f, 1f);
+        chipBar.pivot = new Vector2(0f, 0.5f);
+        chipBar.offsetMin = new Vector2(0, 8);
+        chipBar.offsetMax = new Vector2(4, -8);
+        chipBar.gameObject.AddComponent<Image>().color = TitleAccent;
+        Text chipLabel = CreateText(template, "Label", "Perk", 20, TextWhite, FontStyle.Bold, TextAnchor.MiddleLeft,
+            Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
+        chipLabel.rectTransform.offsetMin = new Vector2(20, 0);
+        chipLabel.rectTransform.offsetMax = new Vector2(-12, 0);
+        chipLabel.supportRichText = true;
+        template.gameObject.SetActive(false);
+
+        RectTransform noPerk = CreateUIObject("NoPerkText", window);
+        noPerk.gameObject.AddComponent<LayoutElement>().preferredHeight = 48;
+        CreateText(noPerk, "Label", "선택한 특성이 없습니다", 18, PauseSubText, FontStyle.Normal, TextAnchor.MiddleCenter,
+            Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
+
+        RectTransform spacer = CreateUIObject("Spacer", window);
+        spacer.gameObject.AddComponent<LayoutElement>().preferredHeight = 4;
+
+        Button titleButton = CreatePauseButton(window, rounded, "TitleButton", "타이틀로 돌아가기", TitlePrimaryBG, TitlePrimaryHover, TitlePrimaryBorder);
+
+        var so = new SerializedObject(controller);
+        so.FindProperty("survivalTimeText").objectReferenceValue = survivalValue;
+        so.FindProperty("scoreText").objectReferenceValue = scoreValue;
+        so.FindProperty("levelText").objectReferenceValue = levelValue;
+        so.FindProperty("perkListRoot").objectReferenceValue = perkGrid;
+        so.FindProperty("perkEntryTemplate").objectReferenceValue = template.gameObject;
+        so.FindProperty("noPerkText").objectReferenceValue = noPerk.gameObject;
+        so.FindProperty("titleButton").objectReferenceValue = titleButton;
+        so.ApplyModifiedPropertiesWithoutUndo();
+
+        AddSceneToBuildSettings(EndingScenePath);
+
+        EditorSceneManager.MarkSceneDirty(scene);
+        EditorSceneManager.SaveScene(scene);
+        Debug.Log("엔딩 화면 생성 및 연결 완료: " + EndingScenePath + " (EndingCanvas)");
+    }
+
+    static Text CreateStatCard(RectTransform parent, Sprite sprite, string name, string label, string value)
+    {
+        RectTransform card = CreateUIObject(name + "Card", parent);
+        var img = card.gameObject.AddComponent<Image>();
+        img.sprite = sprite;
+        img.type = Image.Type.Sliced;
+        img.color = PauseButtonBG;
+
+        CreateText(card, "Label", label, 17, PauseSubText, FontStyle.Bold, TextAnchor.UpperCenter,
+            new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0.5f, 1f), new Vector2(0, -18), new Vector2(0, 24));
+        return CreateText(card, "Value", value, 44, TextWhite, FontStyle.Bold, TextAnchor.LowerCenter,
+            new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0.5f, 0f), new Vector2(0, 16), new Vector2(0, 56));
+    }
+
     // 2026-11-01: 이미 만들어진 Main의 일시정지 메뉴는 그대로 두고 설정 창만 추가/교체해서 연결
     [MenuItem("Tools/HUD/Add Settings Panel To Pause Menu (Main)")]
     public static void AddSettingsPanelToPauseMenu()
