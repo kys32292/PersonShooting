@@ -46,7 +46,7 @@ public class EndingController : MonoBehaviour
         if (scoreText != null) scoreText.text = Mathf.FloorToInt(RunResult.Score).ToString("N0");
         if (levelText != null) levelText.text = "Lv. " + Mathf.Max(RunResult.Level, 1);
 
-        // 같은 특성은 한 줄로 묶어 "이름 ×횟수"로 표시 (처음 고른 순서 유지)
+        // 같은 특성은 한 줄로 묶어 "이름 LV.횟수"로 강화 단계처럼 표시 (처음 고른 순서 유지)
         var order = new List<PerkData>();
         var counts = new Dictionary<PerkData, int>();
         foreach (var perk in RunResult.Perks)
@@ -71,7 +71,7 @@ public class EndingController : MonoBehaviour
             var label = entry.GetComponentInChildren<Text>(true);
             if (label != null)
             {
-                label.text = counts[perk] > 1 ? $"{perk.perkName}  <color=#E0453A>×{counts[perk]}</color>" : perk.perkName;
+                label.text = $"{perk.perkName}  <color=#E0453A>LV.{counts[perk]}</color>";
             }
             entry.SetActive(true);
         }
