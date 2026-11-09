@@ -2442,6 +2442,9 @@ MonoBehaviour:
   - {fileID: 732777297}
   - {fileID: 1965352160}
   phaseCount: 0
+  hpIncreasePerLoop: 0.2
+  damageIncreasePerLoop: 0.1
+  loopCount: 0
 --- !u!114 &1573756159
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2491,6 +2494,14 @@ MonoBehaviour:
   expValueText: {fileID: 914372255}
   ESCPausePanel: {fileID: 1602331060}
   isPaused: 0
+  endingSceneName: Ending
+  closeDistance: 5
+  farDistance: 20
+  closeBonus: 0.5
+  farBonus: 0.5
+  spinBonus: 1
+  jumpBonus: 0.5
+  expPopup: {fileID: 0}
 --- !u!1 &1602331060
 GameObject:
   m_ObjectHideFlags: 0
@@ -3312,7 +3323,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8320621845621256831, guid: 889bb1342e1f1a745a674445a3faa4b4, type: 3}
       propertyPath: groundLayer.m_Bits
-      value: 0
+      value: 8
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
