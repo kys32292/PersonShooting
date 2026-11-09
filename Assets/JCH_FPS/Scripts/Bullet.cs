@@ -19,6 +19,7 @@ public class Bullet : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
         rb.velocity = transform.forward * bulletSpeed;
+        PesonShooting.VFX.VfxService.AttachBulletTrail(transform);
     }
 
     private void Update()

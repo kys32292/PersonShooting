@@ -11,7 +11,17 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6da665a6c1fe4d998b56db5eff7797c1, type: 3}
   m_Name: VfxConfig
-  m_EditorClassIdentifier:
+  m_EditorClassIdentifier: 
+  bulletTrail:
+    enabled: 1
+    length: 10
+    width: 0.1
+    tailWidthRatio: 0.15
+    headColor: {r: 0.94716984, g: 0.8076443, b: 0.3055963, a: 1}
+    tailColor: {r: 0.5773585, g: 0.52860576, b: 0.029412555, a: 0}
+    fadeDuration: 0.12
+    minVertexDistance: 0.05
+    material: {fileID: 0}
   entries:
   - id: 0
     prefab: {fileID: 500345726442012828, guid: 50a810bfd70577b41a2d43ae0241ea2d, type: 3}
@@ -19,7 +29,6 @@ MonoBehaviour:
     lifetime: 2
     surfaceOffset: 0.03
     rotationOffset: {x: 0, y: 0, z: 0}
-  # 2026-11-09: EnemyHit 두 번째 후보. 두 항목 중 하나를 피격마다 같은 확률로 선택합니다.
   - id: 0
     prefab: {fileID: 5586783540032275536, guid: 6e57a3cf9435eb14fb9928fa4ee60c63, type: 3}
     scale: 1

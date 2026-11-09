@@ -23,6 +23,28 @@ namespace PesonShooting.VFX
             public Vector3 rotationOffset;
         }
 
+        [Serializable]
+        public sealed class BulletTrailSettings
+        {
+            public bool enabled = true;
+            [Tooltip("총알 뒤에 남는 궤적의 최대 길이 (월드 단위)")]
+            [Min(0.01f)] public float length = 2f;
+            [Tooltip("총알 쪽 선의 굵기 (월드 단위)")]
+            [Min(0.001f)] public float width = 0.06f;
+            [Range(0f, 1f)] public float tailWidthRatio = 0.15f;
+            [ColorUsage(true, true)] public Color headColor = new Color(0.3f, 0.9f, 1f, 1f);
+            [ColorUsage(true, true)] public Color tailColor = new Color(0.1f, 0.5f, 1f, 0f);
+            [Tooltip("총알이 사라진 뒤 궤적이 페이드 아웃되는 시간 (초)")]
+            [Min(0f)] public float fadeDuration = 0.12f;
+            [Tooltip("궤적 점 사이의 최소 거리. 작을수록 곡선을 세밀하게 표현합니다.")]
+            [Min(0.001f)] public float minVertexDistance = 0.05f;
+            [Tooltip("비워 두면 기본 레이저 머티리얼 사용. 지정 시 정점 색상과 투명도를 지원해야 합니다.")]
+            public Material material;
+        }
+
+        [SerializeField] private BulletTrailSettings bulletTrail = new BulletTrailSettings();
+        public BulletTrailSettings BulletTrail => bulletTrail;
+
         [SerializeField] private Entry[] entries = { new Entry { id = VfxId.EnemyHit } };
 
         // 2026-11-09: 같은 ID의 유효한 프리팹 중 하나를 같은 확률로 선택합니다.

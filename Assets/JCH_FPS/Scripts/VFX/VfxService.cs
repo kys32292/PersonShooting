@@ -34,12 +34,20 @@ namespace PesonShooting.VFX
             Play(VfxId.EnemyHit, position, Quaternion.LookRotation(outward));
         }
 
-        // 2026-11-09: 호출 지점은 ID, 월드 위치, 방향만 전달합니다.
-        // 설정 누락은 경고 한 번으로 끝내고 피해 처리 등 게임 진행을 막지 않습니다.
-        public static void Play(VfxId id, Vector3 position, Quaternion rotation)
+        // 총알에서는 한 번 호출하고, 추적과 정리는 VFX가 담당합니다.
+        public static void AttachBulletTrail(Transform bullet)
         {
-            if (!Application.isPlaying) return;
+            if (!Application.isPlaying || bullet == null || !LoadConfig()) return;
+            if (config.BulletTrail == null || !config.BulletTrail.enabled) return;
 
+            var instance = new GameObject("Bullet Laser Trail");
+            instance.layer = bullet.gameObject.layer;
+            UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(instance, bullet.gameObject.scene);
+            instance.AddComponent<BulletTrailVfx>().Initialize(bullet, config.BulletTrail);
+        }
+
+        private static bool LoadConfig()
+        {
             if (!configLoaded)
             {
                 config = Resources.Load<VfxConfig>(ConfigPath);
@@ -50,7 +58,12 @@ namespace PesonShooting.VFX
                 }
             }
 
-            if (config == null) return;
+            return config != null;
+        }
+
+        public static void Play(VfxId id, Vector3 position, Quaternion rotation)
+        {
+            if (!Application.isPlaying || !LoadConfig()) return;
 
             // 2026-11-09: 같은 상황에 등록된 여러 연출 중 하나를 Config에서 랜덤 선택합니다.
             if (!config.TryGetRandom(id, out VfxConfig.Entry entry))
