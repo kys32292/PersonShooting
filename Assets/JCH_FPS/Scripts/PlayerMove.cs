@@ -20,6 +20,7 @@ public class PlayerMove : MonoBehaviour, IDamageable
     // Start is called before the first frame update
     void Start()
     {
+        yRot = transform.eulerAngles.y;
         rb = GetComponent<Rigidbody>();
         col = GetComponent<Collider>();
 
