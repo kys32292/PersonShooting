@@ -52,7 +52,8 @@ namespace PesonShooting.VFX
 
             if (config == null) return;
 
-            if (!config.TryGet(id, out VfxConfig.Entry entry) || entry.prefab == null)
+            // 2026-11-09: 같은 상황에 등록된 여러 연출 중 하나를 Config에서 랜덤 선택합니다.
+            if (!config.TryGetRandom(id, out VfxConfig.Entry entry))
             {
                 if (warnedIds.Add(id))
                 {

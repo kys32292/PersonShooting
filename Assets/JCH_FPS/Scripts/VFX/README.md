@@ -6,8 +6,14 @@
 - `VfxId`: 상황 식별자입니다. 현재 `EnemyHit`만 등록되어 있습니다.
 - `VfxConfig`: 상황별 프리팹, 배율, 제거 시간, 표면 오프셋, 회전 보정을 보관합니다.
 - `Resources/VFX/VfxConfig.asset`: 최초 호출 때 자동 로드되는 실제 설정입니다.
-  기존 `Assets/Art/VFX/HitImpactVFX/00_Prefab/0_Classic/VFX_Classic_01.prefab`을 연결했습니다.
+  기존 `Assets/Art/VFX/HitImpactVFX/00_Prefab/0_Classic/`의
+  `VFX_Classic_01.prefab`, `VFX_Classic_02.prefab`을 연결했습니다.
   원본 에셋은 수정하지 않았습니다.
+
+<!-- 2026-11-09: 같은 상황의 복수 후보를 랜덤 재생하도록 확장했습니다. -->
+같은 ID의 Entries는 랜덤 후보입니다. 현재 Enemy Hit 두 항목 중 하나가 매 피격마다
+각각 50% 확률로 재생됩니다. 같은 이펙트가 연속으로 나올 수 있으며 빈 프리팹은 제외합니다.
+크기, 제거 시간, 표면 오프셋, 회전은 후보별로 따로 설정할 수 있습니다.
 
 ## 현재 연결
 
@@ -22,7 +28,7 @@
 ## 연출 변경
 
 1. Project 창에서 이 폴더의 `Resources/VFX/VfxConfig.asset`을 선택합니다.
-2. Entries의 Enemy Hit에서 Prefab, Scale, Lifetime, Surface Offset, Rotation Offset을 조정합니다.
+2. Entries의 Enemy Hit 두 항목에서 각각 Prefab, Scale, Lifetime, Surface Offset, Rotation Offset을 조정합니다.
 3. 총알로 살아 있는 적을 맞혀 크기와 방향, 재생 종료를 확인합니다.
 
 Config는 플레이 시작 전에 수정합니다. 자동 로드용 Config를 같은 Resources 경로로 중복 생성하지 않습니다.

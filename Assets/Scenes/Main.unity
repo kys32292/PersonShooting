@@ -462,8 +462,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Button
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 4ea16acb35368144bb0bcbf7d44f823f, type: 2}
+  m_sharedMaterial: {fileID: 6668067472572444234, guid: 4ea16acb35368144bb0bcbf7d44f823f, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -3012,8 +3012,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Button
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 4ea16acb35368144bb0bcbf7d44f823f, type: 2}
+  m_sharedMaterial: {fileID: 6668067472572444234, guid: 4ea16acb35368144bb0bcbf7d44f823f, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -9422,6 +9422,9 @@ MonoBehaviour:
   - {fileID: 732777297}
   - {fileID: 1965352160}
   phaseCount: 0
+  hpIncreasePerLoop: 0.2
+  damageIncreasePerLoop: 0.1
+  loopCount: 0
 --- !u!114 &1573756159
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9472,6 +9475,13 @@ MonoBehaviour:
   ESCPausePanel: {fileID: 0}
   isPaused: 0
   endingSceneName: Ending
+  closeDistance: 5
+  farDistance: 20
+  closeBonus: 0.5
+  farBonus: 0.5
+  spinBonus: 1
+  jumpBonus: 0.5
+  expPopup: {fileID: 0}
 --- !u!1001 &1576204158
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -13979,8 +13989,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Button
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 4ea16acb35368144bb0bcbf7d44f823f, type: 2}
+  m_sharedMaterial: {fileID: 6668067472572444234, guid: 4ea16acb35368144bb0bcbf7d44f823f, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []

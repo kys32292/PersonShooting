@@ -19,3 +19,10 @@ MonoBehaviour:
     lifetime: 2
     surfaceOffset: 0.03
     rotationOffset: {x: 0, y: 0, z: 0}
+  # 2026-11-09: EnemyHit 두 번째 후보. 두 항목 중 하나를 피격마다 같은 확률로 선택합니다.
+  - id: 0
+    prefab: {fileID: 5586783540032275536, guid: 6e57a3cf9435eb14fb9928fa4ee60c63, type: 3}
+    scale: 1
+    lifetime: 2
+    surfaceOffset: 0.03
+    rotationOffset: {x: 0, y: 0, z: 0}

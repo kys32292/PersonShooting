@@ -25,22 +25,36 @@ namespace PesonShooting.VFX
 
         [SerializeField] private Entry[] entries = { new Entry { id = VfxId.EnemyHit } };
 
-        // 2026-11-09: Inspector 설정을 공통 서비스가 조회합니다. 같은 ID는 한 번만 등록합니다.
-        public bool TryGet(VfxId id, out Entry entry)
+        // 2026-11-09: 같은 ID의 유효한 프리팹 중 하나를 같은 확률로 선택합니다.
+        // 빈 항목은 제외하고, 각 후보의 크기/수명/회전 설정도 함께 반환합니다.
+        public bool TryGetRandom(VfxId id, out Entry entry)
         {
+            entry = null;
+            int candidateCount = 0;
             if (entries != null)
             {
                 foreach (Entry candidate in entries)
                 {
-                    if (candidate != null && candidate.id == id)
+                    if (candidate != null && candidate.id == id && candidate.prefab != null)
                     {
-                        entry = candidate;
-                        return true;
+                        candidateCount++;
                     }
+                }
+
+                if (candidateCount == 0) return false;
+
+                // 2026-11-09: 매 피격마다 독립 선택하므로 같은 이펙트가 연속으로 나올 수 있습니다.
+                int selectedIndex = UnityEngine.Random.Range(0, candidateCount);
+                foreach (Entry candidate in entries)
+                {
+                    if (candidate == null || candidate.id != id || candidate.prefab == null) continue;
+                    if (selectedIndex-- != 0) continue;
+
+                    entry = candidate;
+                    return true;
                 }
             }
 
-            entry = null;
             return false;
         }
     }
