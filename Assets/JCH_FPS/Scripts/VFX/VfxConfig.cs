@@ -42,6 +42,36 @@ namespace PesonShooting.VFX
             public Material material;
         }
 
+        // 2026-11-09: 카드 흡수와 총 강화 발광의 수치를 한곳에서 조절합니다. 시간은 일시정지와 무관한 실제 초입니다.
+        [Serializable]
+        public sealed class PerkAbsorbSettings
+        {
+            public bool enabled = true;
+            [Tooltip("카드가 총으로 흡수되는 시간 (초)")]
+            [Min(0.01f)] public float absorbDuration = 0.6f;
+            [Tooltip("흡수 직전 카드 크기 / 원래 카드 크기")]
+            [Range(0f, 1f)] public float endScale = 0.015f;
+            [Tooltip("위로 휘어지는 높이 / 화면 높이. 0이면 직선, 음수면 아래로 휘어집니다.")]
+            [Range(-0.5f, 0.5f)] public float arcHeightRatio = 0.07f;
+            [Tooltip("이동과 축소 가속도. 1이면 일정, 클수록 후반에 빠르게 흡수됩니다.")]
+            [Min(0.1f)] public float absorbPower = 2f;
+            [Tooltip("카드가 사라지기 시작하는 진행률 (0~1)")]
+            [Range(0f, 0.99f)] public float fadeStart = 0.8f;
+            [Tooltip("총 발광 시간 (초). 0이면 발광 생략")]
+            [Min(0f)] public float flashDuration = 0.38f;
+            [Tooltip("총 발광 색상. 알파는 발광 불투명도입니다.")]
+            [ColorUsage(true, true)] public Color flashColor = new Color(0.3f, 1.5f, 2f, 1f);
+            [Tooltip("발광 색상의 밝기 배율")]
+            [Min(0f)] public float flashIntensity = 1f;
+            [Tooltip("발광 시간 동안의 반짝임 반복 횟수. 0이면 서서히 사라집니다.")]
+            [Min(0f)] public float flashPulseCount = 2f;
+            [Tooltip("반짝임 밝기 변화 폭. 0이면 깜빡임 없이 사라집니다.")]
+            [Range(0f, 0.5f)] public float flashPulseDepth = 0.35f;
+        }
+
+        [SerializeField] private PerkAbsorbSettings perkAbsorb = new PerkAbsorbSettings();
+        public PerkAbsorbSettings PerkAbsorb => perkAbsorb;
+
         [SerializeField] private BulletTrailSettings bulletTrail = new BulletTrailSettings();
         public BulletTrailSettings BulletTrail => bulletTrail;
 

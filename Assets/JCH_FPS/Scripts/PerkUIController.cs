@@ -30,11 +30,17 @@ public class PerkUIController : MonoBehaviour
                 perkButtons[i].gameObject.SetActive(true);
 
                 PerkData perk = perks[i];
+                Button selectedButton = perkButtons[i];
                 perkNameTexts[i].text = perk.perkName;
 
                 // 버튼 클릭 이벤트 리스너 재설정
                 perkButtons[i].onClick.RemoveAllListeners();
-                perkButtons[i].onClick.AddListener(() => GameManager.Instance.SelectPerk(perk));
+                perkButtons[i].onClick.AddListener(() =>
+                {
+                    // 2026-11-09: 선택창이 닫히기 전에 카드 복사본을 VFX로 넘깁니다. 강화 적용은 기존 흐름을 유지합니다.
+                    PesonShooting.VFX.PerkAbsorbVfx.Play(selectedButton);
+                    GameManager.Instance.SelectPerk(perk);
+                });
             }
             else
             {

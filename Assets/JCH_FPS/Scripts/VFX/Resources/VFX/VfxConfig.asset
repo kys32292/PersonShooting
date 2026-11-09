@@ -12,6 +12,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6da665a6c1fe4d998b56db5eff7797c1, type: 3}
   m_Name: VfxConfig
   m_EditorClassIdentifier: 
+  perkAbsorb:
+    enabled: 1
+    absorbDuration: 0.6
+    endScale: 0.015
+    arcHeightRatio: 0.07
+    absorbPower: 2
+    fadeStart: 0.8
+    flashDuration: 0.38
+    flashColor: {r: 0.3, g: 1.5, b: 2, a: 1}
+    flashIntensity: 1
+    flashPulseCount: 2
+    flashPulseDepth: 0.35
   bulletTrail:
     enabled: 1
     length: 10

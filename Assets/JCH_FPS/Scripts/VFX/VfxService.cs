@@ -12,6 +12,9 @@ namespace PesonShooting.VFX
         private static bool configLoaded;
         private static readonly HashSet<VfxId> warnedIds = new HashSet<VfxId>();
 
+        // 2026-11-09: 카드 VFX도 기존 Config 로더와 캐시를 공유합니다.
+        internal static VfxConfig.PerkAbsorbSettings PerkAbsorb => LoadConfig() ? config.PerkAbsorb : null;
+
         // 2026-11-09: Domain Reload를 꺼도 이전 플레이의 설정 캐시와 경고 상태가 남지 않습니다.
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetState()
