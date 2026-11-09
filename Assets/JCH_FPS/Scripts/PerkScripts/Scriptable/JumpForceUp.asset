@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: JumpForceUp
   m_EditorClassIdentifier: 
   perkType: 1
-  perkName: Jump Force Up
-  description: Jump Force Up 0.5
+  perkName: "\uC810\uD504 \uB192\uC774 \uC99D\uAC00"
+  description: "\uC810\uD504 \uB192\uC774\uAC00 0.5m \uB298\uC5B4\uB0A9\uB2C8\uB2E4."
   icon: {fileID: 0}
   value: 0.5

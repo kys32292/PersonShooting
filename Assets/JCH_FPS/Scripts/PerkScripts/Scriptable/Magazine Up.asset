@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Magazine Up
   m_EditorClassIdentifier: 
   perkType: 3
-  perkName: Magazine Up
-  description: Increase 10 Magazine
+  perkName: "\uCD5C\uB300 \uC7A5\uD0C4\uC218 \uC99D\uAC00"
+  description: "\uCD5C\uB300 \uC7A5\uD0C4\uC218\uB97C 10 \uC99D\uAC00 \uC2DC\uD0B5\uB2C8\uB2E4."
   icon: {fileID: 0}
   value: 10

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: MoveSpeed
   m_EditorClassIdentifier: 
   perkType: 0
-  perkName: Move Speed Up
-  description: Increase speed 10
+  perkName: "\uC774\uB3D9 \uC18D\uB3C4 \uC99D\uAC00"
+  description: "\uC774\uB3D9 \uC18D\uB3C4\uB97C 10 \uC99D\uAC00 \uC2DC\uD0B5\uB2C8\uB2E4."
   icon: {fileID: 0}
   value: 10
