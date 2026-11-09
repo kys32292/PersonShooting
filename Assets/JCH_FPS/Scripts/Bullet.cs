@@ -54,6 +54,13 @@ public class Bullet : MonoBehaviour
 
         if(other.TryGetComponent<IDamageable>(out var target))
         {
+            // 2026-11-09: 살아 있는 적의 유효한 피격만 VFX 서비스로 전달합니다.
+            // 치명타도 연출이 나오도록 피해 적용 전에 호출하며 기존 피해 계산은 유지합니다.
+            if (target is EnemyBase enemy && !enemy.IsDead && bulletDamage > 0f)
+            {
+                PesonShooting.VFX.VfxService.PlayEnemyHit(other, transform.position, transform.forward);
+            }
+
             target.TakeDamage(bulletDamage);
         }
 
