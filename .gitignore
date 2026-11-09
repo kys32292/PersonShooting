@@ -74,3 +74,9 @@ crashlytics-build.properties
 *.bak
 *.swp
 *~
+
+# ========================================
+# OMX session files
+# ========================================
+
+.omx/
