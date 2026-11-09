@@ -1,3 +1,4 @@
+// 11/09 - íŒŒì¼ ì¸ì½”ë”© CP949 -> UTF-8 ë³€í™˜ (í•œê¸€ ì£¼ì„ ê¹¨ì§ í•´ê²°)
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -5,17 +6,17 @@ using UnityEngine;
 [System.Serializable]
 public struct EnemySpawnInfo
 {
-    public GameObject enemyPrefab; // ¼ÒÈ¯ÇÒ ÀûÀÇ Á¾·ù
-    public int count; // ÀûÀÇ ¼ö
+    public GameObject enemyPrefab; // ì†Œí™˜í•  ì ì˜ ì¢…ë¥˜
+    public int count; // ì ì˜ ìˆ˜
 }
 
 [System.Serializable]
 public struct SubPhase
 {
-    [Header("===ÇöÀç ¿şÀÌºêÀÇ ÆäÀÌÁî===")]
+    [Header("===í˜„ì¬ ì›¨ì´ë¸Œì˜ í˜ì´ì¦ˆ===")]
     public string phaseName;
 
-    [Header("=== ½ºÆù µÉ Àû ¸ñ·Ï===")]
+    [Header("=== ìŠ¤í° ë  ì  ëª©ë¡===")]
     public List<EnemySpawnInfo> enemyList;
     public float spawnInterval;
 }
@@ -23,6 +24,6 @@ public struct SubPhase
 [CreateAssetMenu(fileName = "NewWaveData", menuName = "Wave Data/Wave Data")]
 public class WaveData : ScriptableObject
 {
-    [Header("¼­ºê ÆäÀÌÁî ¸®½ºÆ®")]
+    [Header("ì„œë¸Œ í˜ì´ì¦ˆ ë¦¬ìŠ¤íŠ¸")]
     public List<SubPhase> subPhases = new List<SubPhase>();
 }

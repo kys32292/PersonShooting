@@ -1,3 +1,4 @@
+// 11/09 - íŒŒì¼ ì¸ì½”ë”© CP949 -> UTF-8 ë³€í™˜ (í•œê¸€ ì£¼ì„ ê¹¨ì§ í•´ê²°)
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -7,8 +8,8 @@ using UnityEngine.UI;
 public class PerkUIController : MonoBehaviour
 {
     [SerializeField] private GameObject uiPanel;
-    [SerializeField] private List<Button> perkButtons; // ¹öÆ° 3°³ ¿¬°á
-    [SerializeField] private List<TextMeshProUGUI> perkNameTexts; // ÅØ½ºÆ® 3°³ ¿¬°á
+    [SerializeField] private List<Button> perkButtons; // ë²„íŠ¼ 3ê°œ ì—°ê²°
+    [SerializeField] private List<TextMeshProUGUI> perkNameTexts; // í…ìŠ¤íŠ¸ 3ê°œ ì—°ê²°
 
     // 2026-10-21: used by PauseMenuController to block ESC pause while perk selection is open
     public bool IsOpen => uiPanel != null && uiPanel.activeSelf;
@@ -31,7 +32,7 @@ public class PerkUIController : MonoBehaviour
                 PerkData perk = perks[i];
                 perkNameTexts[i].text = perk.perkName;
 
-                // ¹öÆ° Å¬¸¯ ÀÌº¥Æ® ¸®½º³Ê Àç¼³Á¤
+                // ë²„íŠ¼ í´ë¦­ ì´ë²¤íŠ¸ ë¦¬ìŠ¤ë„ˆ ì¬ì„¤ì •
                 perkButtons[i].onClick.RemoveAllListeners();
                 perkButtons[i].onClick.AddListener(() => GameManager.Instance.SelectPerk(perk));
             }

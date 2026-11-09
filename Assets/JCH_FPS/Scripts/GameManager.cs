@@ -20,7 +20,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private PerkUIController perkUI;
 
     // 2026-10-06: 경험치 바 UI 연결용 필드 추가 (체력/탄환 UI와 동일한 패턴)
-    [Header("����ġ UI")]
+    [Header("경험치 UI")] // 11/09 - 깨진 헤더 글자 복구
     [SerializeField] private Image expBar;
     [SerializeField] private TMP_Text levelText;
     [SerializeField] private TMP_Text expValueText; // 2026-10-06: 경험치 바 가운데 "현재/다음레벨 필요치" 텍스트
@@ -52,6 +52,20 @@ public class GameManager : MonoBehaviour
         perkUI = GetComponent<PerkUIController>();
 
         perkUI.CloseUI();
+
+        // 11/09 - 경험치 연출 매니저가 연결 안 되어 있으면 자동으로 붙이고 경험치 바를 도착점으로 설정
+        if (expPopup == null)
+        {
+            expPopup = GetComponent<ExpPopupManager>();
+            if (expPopup == null)
+            {
+                expPopup = gameObject.AddComponent<ExpPopupManager>();
+            }
+        }
+        if (expBar != null)
+        {
+            expPopup.Init(expBar.canvas, expBar.rectTransform);
+        }
 
         RefreshEXPUI(); // 2026-10-06: 시작 시 경험치 바 초기값 표시
     }
@@ -85,6 +99,14 @@ public class GameManager : MonoBehaviour
 
     public void AddEXP(float exp)
     {
+        AddEXPInternal(exp);
+
+        RefreshEXPUI(); // 2026-10-06: 경험치 획득 시 바/텍스트 갱신
+    }
+
+    // 11/09 - 내부 수치만 올림 (UI 갱신은 호출하는 쪽에서 결정)
+    private void AddEXPInternal(float exp)
+    {
         currentEXP += exp;
         totalEXP += exp;
 
@@ -92,8 +114,77 @@ public class GameManager : MonoBehaviour
         {
             LevelUp();
         }
+    }
 
-        RefreshEXPUI(); // 2026-10-06: 경험치 획득 시 바/텍스트 갱신
+    // 11/09 - 적 처치 경험치 ----------------------------------------
+    // 처치 방식에 따라 배율을 적용하고, 경험치 연출(숫자 -> 이미지 S자 이동)이 끝난 뒤 경험치 바를 갱신
+    // 내부 수치/레벨업(특성 선택 창)은 즉시 처리됨
+
+    [Header("처치 경험치 배율 (보너스는 서로 더해짐)")]
+    [SerializeField] private float closeDistance = 5f;   // 이 거리 이하 = 근거리
+    [SerializeField] private float farDistance = 20f;    // 이 거리 이상 = 원거리
+    [SerializeField] private float closeBonus = 0.5f;    // 근거리 처치 +50%
+    [SerializeField] private float farBonus = 0.5f;      // 원거리 처치 +50%
+    [SerializeField] private float spinBonus = 1.0f;     // 360도 회전 처치 +100%
+    [SerializeField] private float jumpBonus = 0.5f;     // 점프 중 처치 +50%
+
+    [Header("경험치 연출")]
+    [SerializeField] private ExpPopupManager expPopup;
+
+    public void AddKillEXP(float baseExp, Vector3 deathPosition)
+    {
+        float finalExp = baseExp * GetKillMultiplier(deathPosition);
+
+        AddEXPInternal(finalExp);
+
+        if (expPopup != null)
+        {
+            expPopup.Play(finalExp, deathPosition, RefreshEXPUI);
+        }
+        else
+        {
+            RefreshEXPUI();
+        }
+    }
+
+    private float GetKillMultiplier(Vector3 deathPosition)
+    {
+        if (playerPrefab == null)
+        {
+            playerPrefab = FindObjectOfType<PlayerMove>();
+        }
+        if (playerPrefab == null)
+        {
+            return 1f;
+        }
+
+        float multiplier = 1f;
+
+        // 1. 거리 구간 (가까울 때, 멀 때 모두 보너스)
+        Vector3 playerPos = playerPrefab.transform.position;
+        float distance = Vector2.Distance(new Vector2(playerPos.x, playerPos.z), new Vector2(deathPosition.x, deathPosition.z));
+        if (distance <= closeDistance)
+        {
+            multiplier += closeBonus;
+        }
+        else if (distance >= farDistance)
+        {
+            multiplier += farBonus;
+        }
+
+        // 2. 0.5초 안에 약 360도 회전
+        if (playerPrefab.RecentlySpun)
+        {
+            multiplier += spinBonus;
+        }
+
+        // 3. 점프 중
+        if (playerPrefab.IsAirborne)
+        {
+            multiplier += jumpBonus;
+        }
+
+        return multiplier;
     }
 
     public void LevelUp()

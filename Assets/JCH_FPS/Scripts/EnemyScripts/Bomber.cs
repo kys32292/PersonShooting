@@ -1,3 +1,4 @@
+// 11/09 - íŒŒì¼ ì¸ì½”ë”© CP949 -> UTF-8 ë³€í™˜ (í•œê¸€ ì£¼ì„ ê¹¨ì§ í•´ê²°)
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -9,7 +10,7 @@ public class Bomber : EnemyBase
         Explode();
     }
 
-    [Header("Æø¹ß ¹üÀ§")]
+    [Header("í­ë°œ ë²”ìœ„")]
     [SerializeField]
     private float explosionRadius = 5f;
 
@@ -28,7 +29,7 @@ public class Bomber : EnemyBase
         ExplodedDie();
     }
 
-    // ¿¡µğÅÍ ¾À ºä¿¡¼­ Æø¹ß ¹İ°æÀ» ½Ã°¢ÀûÀ¸·Î È®ÀÎÇÏ±â À§ÇÑ µå·ÎÀ×
+    // ì—ë””í„° ì”¬ ë·°ì—ì„œ í­ë°œ ë°˜ê²½ì„ ì‹œê°ì ìœ¼ë¡œ í™•ì¸í•˜ê¸° ìœ„í•œ ë“œë¡œì‰
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;

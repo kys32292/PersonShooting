@@ -1,3 +1,4 @@
+// 11/09 - íŒŒì¼ ì¸ì½”ë”© CP949 -> UTF-8 ë³€í™˜ (í•œê¸€ ì£¼ì„ ê¹¨ì§ í•´ê²°)
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -19,27 +20,37 @@ public class EnemyManager : MonoBehaviour
         }
     }
 
-    // Àû ¼ÒÈ¯ -------------------------------------------
+    // ì  ì†Œí™˜ -------------------------------------------
 
-    [Header("=== ¿şÀÌºê ½ÃÀÛ ¿©ºÎ ===")]
+    [Header("=== ì›¨ì´ë¸Œ ì‹œì‘ ì—¬ë¶€ ===")]
     public bool isWaveStarted = false;
 
-    [Header("=== ¿şÀÌºê µ¥ÀÌÅÍ ===")]
+    [Header("=== ì›¨ì´ë¸Œ ë°ì´í„° ===")]
     [SerializeField]
     private WaveData waveData;
 
-    [Header("=== ½ºÆù À§Ä¡ ¸®½ºÆ® ===")]
+    [Header("=== ìŠ¤í° ìœ„ì¹˜ ë¦¬ìŠ¤íŠ¸ ===")]
     [SerializeField]
     private List<Transform> spawnPoints = new List<Transform>();
 
-    private int spawnPointCount; // ½ºÆù À§Ä¡ Ä«¿îÆ®
+    private int spawnPointCount; // ìŠ¤í° ìœ„ì¹˜ ì¹´ìš´íŠ¸
 
-    [Header("=== ÆäÀÌÁî Ä«¿îÆ® ===")]
+    [Header("=== í˜ì´ì¦ˆ ì¹´ìš´íŠ¸ ===")]
     [SerializeField]
-    private int phaseCount = 0; // ÇöÀç ¿şÀÌºêÀÇ ÆäÀÌÁî
+    private int phaseCount = 0; // í˜„ì¬ ì›¨ì´ë¸Œì˜ í˜ì´ì¦ˆ
 
     private float phaseDelay = 0;
     private float phaseDelayTime = 0;
+
+    // 11/09 - ë¬´í•œ ì›¨ì´ë¸Œ: ì›¨ì´ë¸Œ ë°ì´í„°ë¥¼ í•œ ë°”í€´ ëŒ ë•Œë§ˆë‹¤ ìƒˆë¡œ ë‚˜ì˜¤ëŠ” ì ì˜ ì²´ë ¥/ê³µê²©ë ¥ ì¦ê°€
+    [Header("=== ë¬´í•œ ì›¨ì´ë¸Œ ê°•í™” (ë°”í€´ë‹¹ ì¦ê°€ìœ¨) ===")]
+    [SerializeField]
+    private float hpIncreasePerLoop = 0.2f; // ì²´ë ¥ +20%
+    [SerializeField]
+    private float damageIncreasePerLoop = 0.1f; // ê³µê²©ë ¥ +10%
+
+    [SerializeField]
+    private int loopCount = 0; // ì›¨ì´ë¸Œ ë°ì´í„°ë¥¼ ë°˜ë³µí•œ íšŸìˆ˜
 
     public void WaveStart()
     {
@@ -48,41 +59,59 @@ public class EnemyManager : MonoBehaviour
 
     private void SpawnEnemy()
     {
-        List<SubPhase> currentSubPhases = waveData.subPhases; // ¿şÀÌºê µ¥ÀÌÅÍ¿¡¼­ ¼­ºê ÆäÀÌÁî¸¦ °¡Á®¿È
+        List<SubPhase> currentSubPhases = waveData.subPhases; // ì›¨ì´ë¸Œ ë°ì´í„°ì—ì„œ ì„œë¸Œ í˜ì´ì¦ˆë¥¼ ê°€ì ¸ì˜´
 
-        if(phaseCount >= currentSubPhases.Count) // ÆäÀÌÁî ¼ıÀÚ¸¦ ³Ñ±æ °æ¿ì Á¤Áö
+        if(currentSubPhases.Count == 0) // 11/09 - ë¬´í•œ ë°˜ë³µìœ¼ë¡œ ë°”ë€Œì–´ í˜ì´ì¦ˆê°€ ë¹„ì–´ìˆì„ ë•Œë§Œ ì •ì§€
         {
             return;
         }
 
+        // 11/09 - ì´ë²ˆ ë°”í€´ì˜ ê°•í™” ë°°ìœ¨ (0ë°”í€´ = x1.0, 1ë°”í€´ = ì²´ë ¥ x1.2 / ê³µê²©ë ¥ x1.1 ...)
+        float hpMultiplier = 1f + hpIncreasePerLoop * loopCount;
+        float damageMultiplier = 1f + damageIncreasePerLoop * loopCount;
+
         if(Timer(ref phaseDelayTime, phaseDelay))
         {
-            SubPhase currentPhase = currentSubPhases[phaseCount]; // ÇöÀç ÆäÀÌÁî
+            SubPhase currentPhase = currentSubPhases[phaseCount]; // í˜„ì¬ í˜ì´ì¦ˆ
 
-            phaseDelay = currentPhase.spawnInterval; // ÆäÀÌÁî°£ÀÇ ½Ã°£Â÷ ¼³Á¤
+            phaseDelay = currentPhase.spawnInterval; // í˜ì´ì¦ˆê°„ì˜ ì‹œê°„ì°¨ ì„¤ì •
 
-            foreach (EnemySpawnInfo spawnInfo in currentPhase.enemyList) // spawInfo´Â enemyListÀÇ Àû Á¾·ù¿Í ¼ıÀÚ
+            foreach (EnemySpawnInfo spawnInfo in currentPhase.enemyList) // spawInfoëŠ” enemyListì˜ ì  ì¢…ë¥˜ì™€ ìˆ«ì
             {
-                GameObject enemyPrefab = spawnInfo.enemyPrefab; // EnemySpawnInfoÀÇ Àû Á¾·ù
+                GameObject enemyPrefab = spawnInfo.enemyPrefab; // EnemySpawnInfoì˜ ì  ì¢…ë¥˜
 
-                for (int i = 0; i < spawnInfo.count; i++) // EnemySpawnInfoÀÇ Àû ¼ö
+                for (int i = 0; i < spawnInfo.count; i++) // EnemySpawnInfoì˜ ì  ìˆ˜
                 {
-                    GameObject spawnedEnemy = Instantiate(enemyPrefab, spawnPoints[spawnPointCount].position, Quaternion.identity); // Àû ¼ÒÈ¯
+                    GameObject spawnedEnemy = Instantiate(enemyPrefab, spawnPoints[spawnPointCount].position, Quaternion.identity); // ì  ì†Œí™˜
 
-                    spawnPointCount++; // ½ºÆù Æ÷ÀÎÆ® À§Ä¡ º¯°æ
+                    // 11/09 - ë°”í€´ ìˆ˜ì— ë”°ë¼ ì²´ë ¥/ê³µê²©ë ¥ ê°•í™” ì ìš©
+                    EnemyBase enemy = spawnedEnemy.GetComponentInChildren<EnemyBase>();
+                    if (enemy != null)
+                    {
+                        enemy.ApplyStatMultiplier(hpMultiplier, damageMultiplier);
+                    }
 
-                    if (spawnPointCount >= spawnPoints.Count) // ½ºÆù Æ÷ÀÎÆ® ¸®½ºÆ® ¹üÀ§¸¦ ¹ş¾î³ª¸é ÃÊ±âÈ­
+                    spawnPointCount++; // ìŠ¤í° í¬ì¸íŠ¸ ìœ„ì¹˜ ë³€ê²½
+
+                    if (spawnPointCount >= spawnPoints.Count) // ìŠ¤í° í¬ì¸íŠ¸ ë¦¬ìŠ¤íŠ¸ ë²”ìœ„ë¥¼ ë²—ì–´ë‚˜ë©´ ì´ˆê¸°í™”
                     {
                         spawnPointCount = 0;
                     }
                 }
             }
 
-            phaseCount++; // ¼ÒÈ¯ÀÌ ³¡³ª¸é ´ÙÀ½ ÆäÀÌÁî·Î Ä«¿îÆ® º¯°æ
+            phaseCount++; // ì†Œí™˜ì´ ëë‚˜ë©´ ë‹¤ìŒ í˜ì´ì¦ˆë¡œ ì¹´ìš´íŠ¸ ë³€ê²½
+
+            // 11/09 - ë§ˆì§€ë§‰ í˜ì´ì¦ˆê¹Œì§€ ëë‚˜ë©´ ì²˜ìŒë¶€í„° ë‹¤ì‹œ ë°˜ë³µí•˜ê³  ê°•í™” ë‹¨ê³„ ì¦ê°€
+            if (phaseCount >= currentSubPhases.Count)
+            {
+                phaseCount = 0;
+                loopCount++;
+            }
         }
     }
 
-    // ½Ã°£ °è»ê -----------------------------------------
+    // ì‹œê°„ ê³„ì‚° -----------------------------------------
 
     private bool Timer(ref float timer, float time)
     {

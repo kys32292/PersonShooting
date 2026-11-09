@@ -82,16 +82,33 @@ public class PlayerMove : MonoBehaviour, IDamageable
     [SerializeField]
     private LayerMask groundLayer;
 
-    bool IsGrounded()
+    // 11/09 - 경험치 배율(점프 중 킬)에서 쓰기 위해 public으로 변경
+    public bool IsGrounded()
     {
         if (col == null) return false;
 
         // 1. 콜라이더의 가장 밑면(발바닥) 중심점 구하기
         Vector3 bottomCenter = new Vector3(col.bounds.center.x, col.bounds.min.y + 0.05f, col.bounds.center.z);
 
+        // 11/09 - 점프 수정: Main 씬에서 groundLayer가 Nothing으로 덮어쓰여 항상 공중 판정이었음
+        // groundLayer가 비어 있으면 모든 레이어를 바닥으로 보고, 트리거(총알 등)와 플레이어 자신은 제외
+        int mask = groundLayer.value != 0 ? groundLayer.value : Physics.DefaultRaycastLayers;
+
         // 2. 발바닥에서 아래로 0.1m만 Ray를 쏴서 바닥 레이어와 닿았는지 확인
-        return Physics.Raycast(bottomCenter, Vector3.down, 0.1f, groundLayer);
+        RaycastHit[] hits = Physics.RaycastAll(bottomCenter, Vector3.down, 0.1f, mask, QueryTriggerInteraction.Ignore);
+        foreach (RaycastHit hit in hits)
+        {
+            if (!hit.transform.IsChildOf(transform))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
+
+    // 11/09 - 경험치 배율: 점프(공중) 상태 여부
+    public bool IsAirborne => !IsGrounded();
 
     // 좌우 회전 ----------------------------------
 
@@ -121,7 +138,47 @@ public class PlayerMove : MonoBehaviour, IDamageable
 
         yRot += mouseX;
         transform.rotation = Quaternion.Euler(0, yRot, 0);
+
+        TrackSpin(mouseX); // 11/09 - 360도 회전 킬 판정용 회전량 기록
     }
+
+    // 11/09 - 360도 회전 판정 -------------------------------
+
+    [Header("360도 회전 판정")]
+    [SerializeField]
+    private float spinWindow = 0.5f; // 이 시간 안에
+    [SerializeField]
+    private float spinAngle = 330f; // 이 각도 이상 한 방향으로 돌면 회전으로 인정
+    [SerializeField]
+    private float spinGrace = 0.3f; // 회전을 끝낸 뒤 이 시간 안에 적이 죽어도 인정 (총알 비행 시간 고려)
+
+    private readonly Queue<Vector2> spinSamples = new Queue<Vector2>(); // x = 기록 시간, y = 회전량(부호 포함)
+    private float spinSum = 0f;
+    private float lastSpinTime = -999f;
+
+    private void TrackSpin(float deltaYaw)
+    {
+        float now = Time.time;
+
+        spinSamples.Enqueue(new Vector2(now, deltaYaw));
+        spinSum += deltaYaw;
+
+        // 오래된 기록 제거
+        while (spinSamples.Count > 0 && now - spinSamples.Peek().x > spinWindow)
+        {
+            spinSum -= spinSamples.Dequeue().y;
+        }
+
+        // 부호를 포함해 합산하므로 좌우로 흔드는 건 상쇄되고, 한 방향으로 돈 경우만 인정
+        if (Mathf.Abs(spinSum) >= spinAngle)
+        {
+            lastSpinTime = now;
+            spinSamples.Clear();
+            spinSum = 0f;
+        }
+    }
+
+    public bool RecentlySpun => Time.time - lastSpinTime <= spinGrace;
 
     // 총 발사 ----------------------------------------
 
@@ -219,6 +276,7 @@ public class PlayerMove : MonoBehaviour, IDamageable
                 if (bulletComp != null)
                 {
                     bulletComp.owner = gameObject;
+                    bulletComp.bulletDamage = damage; // 11/09 - 퍽 수치와 데미지 연결 (DamageUp 퍽이 실제 피해량에 반영됨)
                 }
             }
 

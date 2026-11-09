@@ -13,9 +13,9 @@ public class Spitter : MonoBehaviour
         animator = GetComponent<Animator>();
     }
 
-    // ���� ���� -----------------------------------
+    // 원거리 공격 ----------------------------------- (11/09 - 깨진 주석 복구)
 
-    [Header("�Ѿ� ������")]
+    [Header("총알 프리펩")] // 11/09 - 깨진 헤더 글자 복구
     [SerializeField]
     private GameObject bulletPrefab;
     [SerializeField]
@@ -39,6 +39,7 @@ public class Spitter : MonoBehaviour
         if (bulletComp != null)
         {
             bulletComp.owner = gameObject;
+            bulletComp.bulletDamage = enemyBase.damage; // 11/09 - 투사체 피해량을 적 공격력과 연결 (무한 웨이브 강화 반영)
         }
     }
 

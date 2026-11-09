@@ -1,3 +1,4 @@
+// 11/09 - íŒŒì¼ ì¸ì½”ë”© CP949 -> UTF-8 ë³€í™˜ (í•œê¸€ ì£¼ì„ ê¹¨ì§ í•´ê²°)
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
@@ -16,15 +17,15 @@ public class EnemyBase : MonoBehaviour, IDamageable
 {
     public EnemyState state;
 
-    [Header("Ã¼·Â")]
+    [Header("ì²´ë ¥")]
     public float maxHP = 100f;
     [SerializeField]
     private float currentHP = 0f;
-    [Header("°æÇèÄ¡")]
+    [Header("ê²½í—˜ì¹˜")]
     [SerializeField]
     private float exp = 100f;
 
-    [Header("ÇÃ·¹ÀÌ¾î ÇÁ¸®Æé")]
+    [Header("í”Œë ˆì´ì–´ í”„ë¦¬íŽ©")]
     [SerializeField]
     public GameObject playerPrefab;
     [SerializeField]
@@ -91,7 +92,7 @@ public class EnemyBase : MonoBehaviour, IDamageable
         }
     }
 
-    // Çàµ¿ »óÅÂ ÀüÈ¯ ------------------------------------------------
+    // í–‰ë™ ìƒíƒœ ì „í™˜ ------------------------------------------------
 
     protected virtual void SetState()
     {
@@ -111,7 +112,7 @@ public class EnemyBase : MonoBehaviour, IDamageable
         }
     }
 
-    // ÀÌµ¿ ----------------------------------------------------------
+    // ì´ë™ ----------------------------------------------------------
 
     private float moveSpeed = 5f;
 
@@ -120,7 +121,7 @@ public class EnemyBase : MonoBehaviour, IDamageable
         agent.speed = _speed;
     }
 
-    // °ø°Ý ------------------------------------------------------------
+    // ê³µê²© ------------------------------------------------------------
 
     [SerializeField]
     public float damage = 10f;
@@ -138,9 +139,9 @@ public class EnemyBase : MonoBehaviour, IDamageable
         animator.SetTrigger("Attack");
     }
 
-    // º® °¨Áö ------------------------------------------
+    // ë²½ ê°ì§€ ------------------------------------------
 
-    [Header("º® °¨Áö ·¹ÀÌ¾î")]
+    [Header("ë²½ ê°ì§€ ë ˆì´ì–´")]
     [SerializeField]
     private LayerMask wallLayer;
 
@@ -166,27 +167,27 @@ public class EnemyBase : MonoBehaviour, IDamageable
         return true;
     }
 
-    // ¾Ö´Ï¸ÞÀÌ¼Ç -----------------------------------------------
+    // ì• ë‹ˆë©”ì´ì…˜ -----------------------------------------------
 
-    [Header("¾Ö´Ï¸ÞÀÌÅÍ")]
+    [Header("ì• ë‹ˆë©”ì´í„°")]
     [SerializeField]
     protected Animator animator;
 
-    // µ¥¹ÌÁö, »ç¸Á Ã³¸® ----------------------------------------
+    // ë°ë¯¸ì§€, ì‚¬ë§ ì²˜ë¦¬ ----------------------------------------
 
     public bool IsDead => currentHP <= 0;
 
     public void TakeDamage(float _damage)
     {
-        if (IsDead) // ÀÌ¹Ì Á×¾úÀ» °æ¿ì Áßº¹ ÀÛµ¿À» ¹æÁöÇÏ±â À§ÇØ
+        if (IsDead) // ì´ë¯¸ ì£½ì—ˆì„ ê²½ìš° ì¤‘ë³µ ìž‘ë™ì„ ë°©ì§€í•˜ê¸° ìœ„í•´
         {
             return;
         }
 
         currentHP -= _damage;
-        currentHP = Mathf.Max(currentHP, 0); // currentHP °ªÀÌ À½¼ö·Î ³»·Á°¡Áö ¾Ê°Ô ÇÏ±â À§ÇÔ
+        currentHP = Mathf.Max(currentHP, 0); // currentHP ê°’ì´ ìŒìˆ˜ë¡œ ë‚´ë ¤ê°€ì§€ ì•Šê²Œ í•˜ê¸° ìœ„í•¨
 
-        if (IsDead) // µ¥¹ÌÁö¸¦ ¹ÞÀº µÚ Á×¾úÀ» °æ¿ì Die¸¦ È£Ãâ
+        if (IsDead) // ë°ë¯¸ì§€ë¥¼ ë°›ì€ ë’¤ ì£½ì—ˆì„ ê²½ìš° Dieë¥¼ í˜¸ì¶œ
         {
             Die();
         }
@@ -198,7 +199,8 @@ public class EnemyBase : MonoBehaviour, IDamageable
 
         if (GameManager.Instance != null)
         {
-            GameManager.Instance.AddEXP(exp);
+            // 11/09 - ì²˜ì¹˜ ë°©ì‹ ë°°ìœ¨ + ê²½í—˜ì¹˜ ì—°ì¶œì„ ìœ„í•´ ì£½ì€ ìœ„ì¹˜(ëª¸í†µ ë†’ì´)ë¥¼ í•¨ê»˜ ë„˜ê¹€
+            GameManager.Instance.AddKillEXP(exp, transform.position + Vector3.up * 1.5f);
         }
 
         animator.SetBool("IsDead", IsDead);
@@ -209,7 +211,14 @@ public class EnemyBase : MonoBehaviour, IDamageable
         Destroy(gameObject);
     }
 
-    // ½Ã°£ °è»ê -----------------------------------------
+    // 11/09 - ë¬´í•œ ì›¨ì´ë¸Œ ê°•í™”: ì†Œí™˜ ì§í›„(Start ì „)ì— í˜¸ì¶œí•´ì•¼ currentHPì—ë„ ë°˜ì˜ë¨
+    public void ApplyStatMultiplier(float hpMultiplier, float damageMultiplier)
+    {
+        maxHP *= hpMultiplier;
+        damage *= damageMultiplier;
+    }
+
+    // ì‹œê°„ ê³„ì‚° -----------------------------------------
 
     private bool Timer(ref float timer, float time)
     {
