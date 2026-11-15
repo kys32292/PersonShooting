@@ -831,6 +831,7 @@ public static class HUDBuilder
         Text survivalValue = CreateStatCard(stats, rounded, "SurvivalTime", "생존 시간", "00:00");
         Text scoreValue = CreateStatCard(stats, rounded, "Score", "점수 (EXP)", "0");
         Text levelValue = CreateStatCard(stats, rounded, "Level", "도달 레벨", "Lv. 1");
+        Text bossValue = CreateStatCard(stats, rounded, "Boss", "보스 처치", "0마리"); // 11/15 - 잡은 보스 수
 
         // ---- 선택한 빌드 ----
         RectTransform buildHeader = CreateUIObject("BuildHeader", window);
@@ -878,6 +879,7 @@ public static class HUDBuilder
         so.FindProperty("survivalTimeText").objectReferenceValue = survivalValue;
         so.FindProperty("scoreText").objectReferenceValue = scoreValue;
         so.FindProperty("levelText").objectReferenceValue = levelValue;
+        so.FindProperty("bossText").objectReferenceValue = bossValue;
         so.FindProperty("perkListRoot").objectReferenceValue = perkGrid;
         so.FindProperty("perkEntryTemplate").objectReferenceValue = template.gameObject;
         so.FindProperty("noPerkText").objectReferenceValue = noPerk.gameObject;

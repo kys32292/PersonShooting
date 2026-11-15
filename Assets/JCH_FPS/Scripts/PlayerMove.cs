@@ -65,7 +65,25 @@ public class PlayerMove : MonoBehaviour, IDamageable
             yVelocity = jumpForce;
         }
 
-        rb.velocity = new Vector3(dir.x * moveSpeed, yVelocity, dir.z * moveSpeed); 
+        // 11/15 - 보스 돌진 넉백: 이동 속도를 매 프레임 덮어쓰므로 넉백 속도를 따로 더해 주고 서서히 줄임
+        knockbackVelocity = Vector3.MoveTowards(knockbackVelocity, Vector3.zero, knockbackDecay * Time.deltaTime);
+
+        rb.velocity = new Vector3(dir.x * moveSpeed, yVelocity, dir.z * moveSpeed) + knockbackVelocity;
+    }
+
+    // 11/15 - 넉백 ----------------------------------------
+
+    [Header("넉백 감속 (초당)")]
+    [SerializeField]
+    private float knockbackDecay = 30f;
+
+    private Vector3 knockbackVelocity = Vector3.zero;
+
+    // 수평 방향으로 밀어냄 (BossEnemy 돌진 등에서 호출)
+    public void ApplyKnockback(Vector3 velocity)
+    {
+        velocity.y = 0f;
+        knockbackVelocity = velocity;
     }
 
     Vector3 InputMoveKey()

@@ -8,9 +8,11 @@ public static class RunResult
     public static float Score;               // 이번 판에 얻은 경험치 총합
     public static int Level;
     public static List<PerkData> Perks = new List<PerkData>(); // 선택한 순서대로
+    public static int BossKills = 0;         // 11/15 - 잡은 보스 수
 
-    public static void Set(float survivalTime, float score, int level, List<PerkData> perks)
+    public static void Set(float survivalTime, float score, int level, List<PerkData> perks, int bossKills = 0)
     {
+        BossKills = bossKills;
         SurvivalTime = survivalTime;
         Score = score;
         Level = level;

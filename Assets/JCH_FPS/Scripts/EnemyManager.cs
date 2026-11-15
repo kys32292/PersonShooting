@@ -111,6 +111,75 @@ public class EnemyManager : MonoBehaviour
         }
     }
 
+    // 11/15 - 보스 소환 -------------------------------------------
+    // GameManager가 등장 조건을 만족했을 때 호출. 플레이어에게서 가장 먼 스폰 포인트에 소환하고
+    // 현재 무한 웨이브 바퀴 수 + 보스 회차만큼 강화한다. (일반 몹 스폰은 그대로 계속됨)
+
+    [Header("=== 보스 ===")]
+    [SerializeField]
+    private GameObject bossPrefab;
+
+    // 11/15 - 보스 회차(몇 번째 보스인지)마다 강화. 무한 웨이브 바퀴 강화와 곱해짐
+    [Header("=== 보스 회차당 증가율 (2번째 보스부터 적용) ===")]
+    [SerializeField]
+    private float bossHpIncreasePerRound = 0.3f; // 체력 +30%
+    [SerializeField]
+    private float bossDamageIncreasePerRound = 0.3f; // 공격력 +30%
+
+    [SerializeField]
+    private int bossRound = 0; // 지금까지 소환한 보스 수 (확인용)
+
+    public bool SpawnBoss()
+    {
+        if (bossPrefab == null)
+        {
+            Debug.LogWarning("[Boss] EnemyManager에 bossPrefab이 연결되지 않았습니다. Tools/Boss/Build Boss (Main)을 실행하세요.");
+            return false; // GameManager가 다음 주기까지 기다렸다가 다시 시도
+        }
+
+        if (spawnPoints.Count == 0)
+        {
+            return false;
+        }
+
+        bossRound++;
+
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        Transform spawnPoint = spawnPoints[0];
+
+        if (player != null)
+        {
+            float farthest = -1f;
+            foreach (Transform point in spawnPoints)
+            {
+                if (point == null) continue;
+
+                float distance = (point.position - player.transform.position).sqrMagnitude;
+                if (distance > farthest)
+                {
+                    farthest = distance;
+                    spawnPoint = point;
+                }
+            }
+        }
+
+        GameObject spawnedBoss = Instantiate(bossPrefab, spawnPoint.position, Quaternion.identity);
+
+        BossEnemy boss = spawnedBoss.GetComponentInChildren<BossEnemy>();
+        if (boss != null)
+        {
+            // 웨이브 바퀴 강화 x 보스 회차 강화 (1번째 보스는 회차 강화 없음)
+            int extraRounds = bossRound - 1;
+            float hpMultiplier = (1f + hpIncreasePerLoop * loopCount) * (1f + bossHpIncreasePerRound * extraRounds);
+            float damageMultiplier = (1f + damageIncreasePerLoop * loopCount) * (1f + bossDamageIncreasePerRound * extraRounds);
+
+            boss.ApplyStatMultiplier(hpMultiplier, damageMultiplier);
+            boss.SetRound(bossRound);
+        }
+
+        return true;
+    }
+
     // 시간 계산 -----------------------------------------
 
     private bool Timer(ref float timer, float time)

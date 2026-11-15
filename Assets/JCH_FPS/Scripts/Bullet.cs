@@ -31,7 +31,7 @@ public class Bullet : MonoBehaviour
 
             return;
         }
-        else if (!isMove && !GameManager.Instance.isPaused)
+        else if (!isMove) // 11/15 - 위 조건에서 이미 일시정지가 아님이 확인되므로 GameManager.Instance null 참조 제거
         {
             isMove = true;
             rb.velocity = transform.forward * bulletSpeed;
@@ -57,7 +57,9 @@ public class Bullet : MonoBehaviour
         {
             // 2026-11-09: 살아 있는 적의 유효한 피격만 VFX 서비스로 전달합니다.
             // 치명타도 연출이 나오도록 피해 적용 전에 호출하며 기존 피해 계산은 유지합니다.
-            if (target is EnemyBase enemy && !enemy.IsDead && bulletDamage > 0f)
+            // 11/15 - 보스(BossEnemy)도 같은 히트 이펙트가 나오도록 조건 확장
+            bool aliveEnemy = (target is EnemyBase enemy && !enemy.IsDead) || (target is BossEnemy boss && !boss.IsDead);
+            if (aliveEnemy && bulletDamage > 0f)
             {
                 PesonShooting.VFX.VfxService.PlayEnemyHit(other, transform.position, transform.forward);
             }

@@ -11,6 +11,7 @@ public class EndingController : MonoBehaviour
     [SerializeField] private Text survivalTimeText;
     [SerializeField] private Text scoreText;
     [SerializeField] private Text levelText;
+    [SerializeField] private Text bossText; // 11/15 - 잡은 보스 수 (Tools/Boss/Add Boss Record To Ending 으로 생성/연결)
 
     [Header("선택한 빌드(특성)")]
     [SerializeField] private Transform perkListRoot;
@@ -45,6 +46,7 @@ public class EndingController : MonoBehaviour
         if (survivalTimeText != null) survivalTimeText.text = $"{seconds / 60:00}:{seconds % 60:00}";
         if (scoreText != null) scoreText.text = Mathf.FloorToInt(RunResult.Score).ToString("N0");
         if (levelText != null) levelText.text = "Lv. " + Mathf.Max(RunResult.Level, 1);
+        if (bossText != null) bossText.text = RunResult.BossKills + "마리"; // 11/15 - 처치 시간 -> 처치 수
 
         // 같은 특성은 한 줄로 묶어 "이름 LV.횟수"로 강화 단계처럼 표시 (처음 고른 순서 유지)
         var order = new List<PerkData>();

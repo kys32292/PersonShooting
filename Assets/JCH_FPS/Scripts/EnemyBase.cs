@@ -72,14 +72,18 @@ public class EnemyBase : MonoBehaviour, IDamageable
 
         SetState();
 
+        // 11/15 - 매 프레임 SetTrigger를 호출하면 트리거가 쌓여 애니메이션이 튀므로, 상태가 바뀐 순간에만 호출
+        bool stateChanged = state != prevState;
+        prevState = state;
+
         switch (state)
         {
             case EnemyState.Idle:
                 agent.isStopped = true;
-                animator.SetTrigger("Idle");
+                if (stateChanged) SetMoveTrigger("Idle", "Track");
                 break;
             case EnemyState.Track:
-                animator.SetTrigger("Track");
+                if (stateChanged) SetMoveTrigger("Track", "Idle");
                 agent.isStopped = false;
                 break;
             case EnemyState.Attack:
@@ -90,6 +94,17 @@ public class EnemyBase : MonoBehaviour, IDamageable
                 agent.isStopped = true;
                 break;
         }
+    }
+
+    // 11/15 - 이전 프레임 상태 (트리거 중복 호출 방지용). 첫 프레임에 반드시 트리거가 나가도록 범위 밖 값으로 시작
+    private EnemyState prevState = (EnemyState)(-1);
+
+    private void SetMoveTrigger(string trigger, string opposite)
+    {
+        if (animator == null) return;
+
+        animator.ResetTrigger(opposite); // 아직 소비되지 않은 반대 트리거가 남아 있으면 지움
+        animator.SetTrigger(trigger);
     }
 
     // 행동 상태 전환 ------------------------------------------------
@@ -136,7 +151,10 @@ public class EnemyBase : MonoBehaviour, IDamageable
     {
         print("Attack!");
 
-        animator.SetTrigger("Attack");
+        if (animator != null) // 11/15 - 애니메이터가 없는 적(Bomber) 대비
+        {
+            animator.SetTrigger("Attack");
+        }
     }
 
     // 벽 감지 ------------------------------------------
@@ -201,6 +219,14 @@ public class EnemyBase : MonoBehaviour, IDamageable
         {
             // 11/09 - 처치 방식 배율 + 경험치 연출을 위해 죽은 위치(몸통 높이)를 함께 넘김
             GameManager.Instance.AddKillEXP(exp, transform.position + Vector3.up * 1.5f);
+            GameManager.Instance.AddKill(); // 11/15 - 보스 등장 조건용 처치 수 집계
+        }
+
+        // 11/15 - Bomber처럼 애니메이터가 없으면 사망 애니메이션 이벤트(DestroyObject)가 오지 않으므로 바로 제거
+        if (animator == null)
+        {
+            Destroy(gameObject);
+            return;
         }
 
         animator.SetBool("IsDead", IsDead);

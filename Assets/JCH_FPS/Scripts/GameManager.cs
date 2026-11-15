@@ -27,10 +27,7 @@ public class GameManager : MonoBehaviour
 
     private PlayerMove playerPrefab;
 
-    [Header("Paused Panel")]
-    [SerializeField]
-    private GameObject ESCPausePanel;
-
+    // 11/15 - ESCPausePanel 필드 삭제 (일시정지는 PauseMenuController 담당)
     public bool isPaused = false;
 
     // 2026-11-07: 엔딩 화면용 이번 판 기록
@@ -75,21 +72,78 @@ public class GameManager : MonoBehaviour
         if (!isPaused && !isGameOver)
         {
             survivalTime += Time.deltaTime;
+
+            CheckBossSpawn(); // 11/15 - 보스 등장 조건 확인
         }
 
-        if (Input.GetKeyDown(KeyCode.Escape))
+        // 11/15 - ESC 처리 삭제: Main 씬에서 ESCPausePanel이 비어 있어 ESC마다 NullReferenceException이 났고,
+        // 일시정지는 이미 PauseMenuController가 담당하고 있어 중복 처리였음
+    }
+
+    // 11/15 - 보스 ----------------------------------------
+    // 일반 몹 처치 수 또는 경과 시간(일시정지 제외) 중 먼저 충족되는 조건에 등장
+    // 보스를 잡으면 처치 수/시간을 0부터 다시 세서, 조건을 또 채우면 다음 보스가 등장 (동시에 1마리만)
+    // 회차마다 강해지는 정도는 EnemyManager의 '보스 회차당 증가율'에서 조절
+
+    [Header("보스 등장 조건 (먼저 충족되는 쪽, 보스 처치 후 다시 셈)")]
+    [SerializeField] private int bossKillThreshold = 50;    // 일반 몹 처치 수
+    [SerializeField] private float bossTimeLimit = 180f;    // 경과 시간(초)
+
+    [Header("보스 상태 (확인용)")]
+    [SerializeField] private int killCount = 0;             // 이번 판 전체 일반 몹 처치 수
+    [SerializeField] private int killsSinceLastBoss = 0;    // 마지막 보스 처치 이후 일반 몹 처치 수
+    [SerializeField] private float timeSinceLastBoss = 0f;  // 마지막 보스 처치 이후 경과 시간
+    [SerializeField] private bool bossAlive = false;
+    [SerializeField] private int bossKillCount = 0;         // 이번 판에 잡은 보스 수 (엔딩 기록)
+
+    public int KillCount => killCount;
+
+    public void AddKill()
+    {
+        killCount++;
+
+        if (!bossAlive) // 보스전 중에 잡은 몹은 다음 보스 조건에 넣지 않음
         {
-            if (ESCPausePanel.activeSelf == false)
-            {
-                ESCPausePanel.SetActive(true);
-                isPaused = true;
-            }
-            else
-            {
-                ESCPausePanel.SetActive(false);
-                isPaused = false;
-            }
+            killsSinceLastBoss++;
         }
+    }
+
+    private void CheckBossSpawn()
+    {
+        if (bossAlive) return;
+
+        timeSinceLastBoss += Time.deltaTime;
+
+        if (killsSinceLastBoss < bossKillThreshold && timeSinceLastBoss < bossTimeLimit) return;
+
+        EnemyManager enemyManager = FindObjectOfType<EnemyManager>();
+        if (enemyManager == null) return;
+
+        if (enemyManager.SpawnBoss())
+        {
+            bossAlive = true;
+        }
+        else
+        {
+            // 소환 실패(프리팹 미연결 등) 시 매 프레임 재시도/경고하지 않도록 다음 주기까지 대기
+            ResetBossCounters();
+        }
+    }
+
+    private void ResetBossCounters()
+    {
+        killsSinceLastBoss = 0;
+        timeSinceLastBoss = 0f;
+    }
+
+    // BossEnemy가 죽을 때 호출 (경험치는 BossEnemy가 AddKillEXP로 따로 지급)
+    public void OnBossDefeated()
+    {
+        bossKillCount++;
+        bossAlive = false;
+        ResetBossCounters(); // 다음 보스 조건을 처음부터 다시 셈
+
+        RequestPerkSelection(); // 처치 보상: 특성 선택 1회 확정
     }
 
     public void GameStarted()
@@ -110,7 +164,8 @@ public class GameManager : MonoBehaviour
         currentEXP += exp;
         totalEXP += exp;
 
-        if(currentEXP >= maxEXP)
+        // 11/15 - 한 번에 많은 경험치를 얻으면 여러 레벨이 연속으로 오르도록 if -> while
+        while (currentEXP >= maxEXP)
         {
             LevelUp();
         }
@@ -192,8 +247,23 @@ public class GameManager : MonoBehaviour
         currentLeve++;
         // 2026-10-06: 레벨업해도 0으로 초기화하지 않고 이전 레벨 필요치 그대로 유지
         // (예: 1->2는 100/175, 2->3은 175/306 식으로 누적)
-        currentEXP = maxEXP;
+        // 11/15 - currentEXP = maxEXP 로 덮어써서 초과 경험치가 버려지던 문제 수정 (누적값을 그대로 유지)
         maxEXP = maxEXP * 1.75f; // 2026-10-06: 레벨업 요구치 증가율 1.2 -> 1.75로 변경
+
+        RequestPerkSelection();
+    }
+
+    // 11/15 - 특성 선택 대기열 ----------------------------------------
+    // 여러 레벨이 한 번에 오르거나 보스 처치 보상과 레벨업이 겹쳐도, 선택창이 덮어써지지 않고 하나씩 차례로 열림
+    private int pendingPerkSelections = 0;
+
+    private void RequestPerkSelection()
+    {
+        if (perkUI != null && perkUI.IsOpen)
+        {
+            pendingPerkSelections++;
+            return;
+        }
 
         ShowPerkSelection();
     }
@@ -262,6 +332,13 @@ public class GameManager : MonoBehaviour
         // 게임 재개 및 UI 닫기
         Time.timeScale = 1f;
         perkUI.CloseUI();
+
+        // 11/15 - 밀려 있는 선택이 있으면 바로 다음 선택창
+        if (pendingPerkSelections > 0)
+        {
+            pendingPerkSelections--;
+            ShowPerkSelection();
+        }
     }
 
     // 2026-11-07: 기록을 RunResult에 넘기고 엔딩 씬으로 이동
@@ -270,7 +347,7 @@ public class GameManager : MonoBehaviour
         if (isGameOver) return;
         isGameOver = true;
 
-        RunResult.Set(survivalTime, totalEXP, currentLeve, selectedPerks);
+        RunResult.Set(survivalTime, totalEXP, currentLeve, selectedPerks, bossKillCount);
 
         Time.timeScale = 1f;
         UnityEngine.SceneManagement.SceneManager.LoadScene(endingSceneName);
