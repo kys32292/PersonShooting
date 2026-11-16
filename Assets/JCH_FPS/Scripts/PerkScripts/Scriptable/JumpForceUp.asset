@@ -12,8 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 83f8999165a04fd4fa6063d597446e85, type: 3}
   m_Name: JumpForceUp
   m_EditorClassIdentifier: 
-  perkType: 1
+  perkType: 0
   perkName: "\uC810\uD504 \uB192\uC774 \uC99D\uAC00"
   description: "\uC810\uD504 \uB192\uC774\uAC00 0.5m \uB298\uC5B4\uB0A9\uB2C8\uB2E4."
   icon: {fileID: 0}
-  value: 0.5
+  statModifiers:
+  - stat: 1
+    mode: 0
+    value: 0.5

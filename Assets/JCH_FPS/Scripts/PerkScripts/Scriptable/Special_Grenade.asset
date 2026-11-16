@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 83f8999165a04fd4fa6063d597446e85, type: 3}
+  m_Name: Special_Grenade
+  m_EditorClassIdentifier: 
+  perkType: 2
+  perkName: "\uC720\uD0C4"
+  description: "6\uBC1C\uB9C8\uB2E4 \uD3EC\uBB3C\uC120\uC73C\uB85C \uB0A0\uC544\uAC00
+    \uD3ED\uBC1C\uD558\uB294 \uC720\uD0C4\uC744 \uBC1C\uC0AC\uD569\uB2C8\uB2E4."
+  icon: {fileID: 0}
+  statModifiers: []
+  special:
+    shotInterval: 6
+    intervalReducePerLevel: 1
+    minShotInterval: 2
+    damageMultiplier: 3
+    damageMultiplierPerLevel: 0.5
+    projectileSpeed: 25
+    projectileRadius: 0.3
+    projectileLifetime: 4
+    projectilePrefab: {fileID: 3372092455280466519, guid: e9d1e83e6aac23c4d8dd6562911afe79, type: 3}
+    color: {r: 0.5, g: 0.9, b: 0.2, a: 1}
+    radius: 5
+    duration: 2
+    pullSpeed: 8
+    pullDamagePerSecond: 0.5
+    launchAngle: 15
+    gravityScale: 1
+    maxPierceCount: 0
+    homingRange: 25
+    homingTurnSpeed: 360
+    ringOrbCount: 3
+    ringOrbitSpeed: 270
+    ringHitInterval: 0.5

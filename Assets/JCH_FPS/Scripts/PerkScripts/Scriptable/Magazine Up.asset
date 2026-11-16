@@ -12,8 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 83f8999165a04fd4fa6063d597446e85, type: 3}
   m_Name: Magazine Up
   m_EditorClassIdentifier: 
-  perkType: 3
+  perkType: 0
   perkName: "\uCD5C\uB300 \uC7A5\uD0C4\uC218 \uC99D\uAC00"
   description: "\uCD5C\uB300 \uC7A5\uD0C4\uC218\uB97C 10 \uC99D\uAC00 \uC2DC\uD0B5\uB2C8\uB2E4."
   icon: {fileID: 0}
-  value: 10
+  statModifiers:
+  - stat: 5
+    mode: 0
+    value: 10

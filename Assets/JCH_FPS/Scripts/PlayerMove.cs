@@ -298,6 +298,12 @@ public class PlayerMove : MonoBehaviour, IDamageable
                 }
             }
 
+            // 11/16 - 특수 공격 퍽 발사 카운트 (방아쇠 1회 = 1카운트, 산탄도 1회)
+            if (specialAttack != null)
+            {
+                specialAttack.OnShotFired(MuzzleTrans.position, fireDir, damage);
+            }
+
             canFire = false;
 
             RefreshAmmoUI(currentAmmo.ToString()); // 2026-10-06: Main 탄환 UI와 맞춰 "현재/용량" 분리 표시로 변경
@@ -339,35 +345,114 @@ public class PlayerMove : MonoBehaviour, IDamageable
     }
 
     // 특성 적용 ------------------------------------------------
+    // 11/16 - 퍽 구조 변경: 얻은 퍽들의 능력치 증감을 모아 "기본값"에서 다시 계산
+    // 최종값 = (기본값 + 고정값 합) x (1 + 퍼센트 합 / 100), 능력치별 최소/최대 제한 적용
 
-    [Header("특성 추가 수치 값")]
-    private float bonusMoveSpeed = 0f;
-    private float bonusJumpForce = 0f;
-    private float bonusFireRate = 0f;
-    public int bonusBulletCount = 0;
+    private readonly List<PerkData> acquiredPerks = new List<PerkData>();
+    private SpecialAttackController specialAttack;
+
+    private bool baseStatsSaved = false;
+    private float baseMoveSpeed;
+    private float baseJumpForce;
+    private float baseFireRate;
+    private float baseReload;
+    private float baseMaxHP;
+    private int baseDamage;
+    private int baseBulletCount;
+    private int baseMagazineSize;
+
+    [Header("능력치 제한")]
+    [SerializeField] private float maxJumpForce = 15f;
+    [SerializeField] private float minFireInterval = 0.05f;
+    [SerializeField] private float minReloadTime = 0.1f;
+    [SerializeField] private float minMoveSpeed = 0.5f;
+
+    private void SaveBaseStats()
+    {
+        if (baseStatsSaved) return;
+        baseStatsSaved = true;
+
+        baseMoveSpeed = moveSpeed;
+        baseJumpForce = jumpForce;
+        baseFireRate = fireRate;
+        baseReload = reload;
+        baseMaxHP = maxHP;
+        baseDamage = damage;
+        baseBulletCount = bulletCount;
+        baseMagazineSize = magazineSize;
+    }
 
     public void ApplyPerk(PerkData perk)
     {
-        switch (perk.perkType)
-        {
-            case PerkType.MoveSpeedUp:
-                moveSpeed += perk.value;
-                break;
-            case PerkType.JumpForceUp:
-                jumpForce = Mathf.Min(15f, jumpForce + perk.value);
-                break;
-            case PerkType.FireRate:
-                fireRate = Mathf.Max(0.05f, fireRate - perk.value);
-                break;
-            case PerkType.DamageUp:
-                damage += (int)perk.value;
-                break;
-            case PerkType.MagazineUp:
+        if (perk == null) return;
 
-                break;
-            case PerkType.ScatterShot:
-                bulletCount += (int)perk.value;
-                break;
+        SaveBaseStats();
+        acquiredPerks.Add(perk);
+        RecalculateStats();
+
+        // 11/16 - 특수 공격 퍽이면 등록 (같은 퍽을 다시 고르면 강화)
+        if (perk.perkType != PerkType.None)
+        {
+            if (specialAttack == null)
+            {
+                specialAttack = GetComponent<SpecialAttackController>();
+                if (specialAttack == null)
+                {
+                    specialAttack = gameObject.AddComponent<SpecialAttackController>();
+                }
+            }
+            specialAttack.AddOrUpgrade(perk);
+        }
+    }
+
+    private float GetStat(StatType stat, float baseValue)
+    {
+        float flat = 0f;
+        float percent = 0f;
+
+        foreach (PerkData perk in acquiredPerks)
+        {
+            if (perk.statModifiers == null) continue;
+
+            foreach (StatModifier mod in perk.statModifiers)
+            {
+                if (mod.stat != stat) continue;
+
+                if (mod.mode == ModifierMode.Flat) flat += mod.value;
+                else percent += mod.value;
+            }
+        }
+
+        return (baseValue + flat) * (1f + percent / 100f);
+    }
+
+    private void RecalculateStats()
+    {
+        moveSpeed = Mathf.Max(minMoveSpeed, GetStat(StatType.MoveSpeed, baseMoveSpeed));
+        jumpForce = Mathf.Clamp(GetStat(StatType.JumpForce, baseJumpForce), 0f, maxJumpForce);
+        fireRate = Mathf.Max(minFireInterval, GetStat(StatType.FireInterval, baseFireRate));
+        reload = Mathf.Max(minReloadTime, GetStat(StatType.ReloadTime, baseReload));
+        damage = Mathf.Max(1, Mathf.RoundToInt(GetStat(StatType.Damage, baseDamage)));
+        bulletCount = Mathf.Max(1, Mathf.RoundToInt(GetStat(StatType.BulletCount, baseBulletCount)));
+
+        // 탄창: 늘어난 만큼 현재 탄도 채워주고, 줄어들면 넘치는 탄은 버림
+        int newMagazine = Mathf.Max(1, Mathf.RoundToInt(GetStat(StatType.MagazineSize, baseMagazineSize)));
+        if (newMagazine != magazineSize)
+        {
+            int diff = newMagazine - magazineSize;
+            magazineSize = newMagazine;
+            currentAmmo = Mathf.Clamp(currentAmmo + Mathf.Max(diff, 0), 0, magazineSize);
+            RefreshAmmoUI(isReloading ? "Reloading..." : currentAmmo.ToString());
+        }
+
+        // 최대 체력: 늘어난 만큼 현재 체력도 회복, 줄어들면 최대 체력에 맞춰 자름
+        float newMaxHP = Mathf.Max(1f, GetStat(StatType.MaxHP, baseMaxHP));
+        if (!Mathf.Approximately(newMaxHP, maxHP))
+        {
+            float diff = newMaxHP - maxHP;
+            maxHP = newMaxHP;
+            currentHP = Mathf.Clamp(currentHP + Mathf.Max(diff, 0f), 0f, maxHP);
+            RefreshHPUI();
         }
     }
 

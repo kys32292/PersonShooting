@@ -12,8 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 83f8999165a04fd4fa6063d597446e85, type: 3}
   m_Name: FireRate
   m_EditorClassIdentifier: 
-  perkType: 2
+  perkType: 0
   perkName: "\uBC1C\uC0AC \uC8FC\uAE30 \uAC10\uC18C"
   description: "\uBC1C\uC0AC \uC8FC\uAE30\uB97C 0.02\uCD08 \uAC10\uC18C \uC2DC\uD0B5\uB2C8\uB2E4."
   icon: {fileID: 0}
-  value: 0.02
+  statModifiers:
+  - stat: 2
+    mode: 0
+    value: -0.02

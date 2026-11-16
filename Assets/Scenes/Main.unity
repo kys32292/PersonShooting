@@ -10523,6 +10523,12 @@ MonoBehaviour:
   - {fileID: 11400000, guid: da33930146d32a149ab2d892caaf20a4, type: 2}
   - {fileID: 11400000, guid: 0b3348d1a66b16b43af0c31fb1d7122f, type: 2}
   - {fileID: 11400000, guid: ac5045a5d31783140a9aceb3b177629a, type: 2}
+  - {fileID: 11400000, guid: 3b86ed21a8694d09a34b07b4fd4c244f, type: 2}
+  - {fileID: 11400000, guid: 3c537cd347f045eca132b5bd925b51d2, type: 2}
+  - {fileID: 11400000, guid: ddbce617543a48ba998617fc487a4770, type: 2}
+  - {fileID: 11400000, guid: ac367338570c41d2b2eb6185a77107d5, type: 2}
+  - {fileID: 11400000, guid: f1418a9d1ef74a15a367727be5bf6f33, type: 2}
+  - {fileID: 11400000, guid: 9bd379bfc77d43199c06dbad2e897928, type: 2}
   perkUI: {fileID: 0}
   expBar: {fileID: 201818}
   levelText: {fileID: 1467858539}
