@@ -124,30 +124,25 @@ MonoBehaviour:
   maxHP: 1500
   currentHP: 0
   exp: 1000
-  moveSpeed: 3.5
-  introTime: 2
-  patternCooldown: 2.5
-  recoverTime: 0.7
-  nearDistance: 8
-  dashChanceFar: 0.6
-  dashChanceNear: 0.3
-  castTime: 1
+  moveSpeed: 6.5
+  introTime: 1.2
+  patternCooldown: 1.2
+  recoverTime: 0.15
+  nearDistance: 10
+  castTime: 0.6
   zoneRadius: 3
   zoneWarningTime: 1
-  zoneActiveTime: 4
-  zoneTickDamage: 8
-  zoneTickInterval: 0.5
-  dashWindupTime: 0.8
+  dashWindupTime: 0.6
   dashTrackRatio: 0.6
-  dashSpeed: 18
-  dashDistance: 15
+  dashSpeed: 30
+  dashDistance: 24
   dashDamage: 25
   dashHitRadius: 1.8
   dashKnockback: 14
-  dashStunTime: 1.2
+  dashStunTime: 0.35
   phase2HPRatio: 0.5
   phase2SpeedMultiplier: 1.2
-  phase2Cooldown: 1.5
+  phase2Cooldown: 0.7
   phase2ZoneCount: 5
   phase2DashCount: 3
   phase2SecondWindupTime: 0.45

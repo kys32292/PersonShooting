@@ -1,8 +1,12 @@
 // 11/15 - 보스 몬스터
 // 등장: GameManager가 처치 수/경과 시간 조건을 확인해 EnemyManager.SpawnBoss()로 한 번 소환
-// 상태: 등장(Intro) -> 추적(Chase) -> 패턴 선택 -> [장판 시전(Casting) | 돌진 예열(DashWindup) -> 돌진(Dashing)] -> 회복/경직(Recover) -> 추적
+// 상태: 등장(Intro) -> 추적(Chase) -> 패턴 선택 -> [장판(Casting) | 돌진(DashWindup -> Dashing) | 투사체(ProjectileWindup)] -> 회복/경직(Recover) -> 추적
 // 패턴 1 장판: 플레이어 위치 + 이동 예측 위치 + 주변에 BossHazardZone 3개 (2페이즈: 5개씩 2번 연속, 경고 시간 단축)
-// 패턴 2 돌진: 예열 동안 바닥에 경로 경고 -> 고정된 방향으로 돌진 -> 경직 (2페이즈: 3연속)
+//             반구 경고 후 분출하는 순간부터 사라질 때까지 닿으면 즉발 데미지
+// 패턴 2 돌진: 예열 동안 바닥에 경로 경고 -> 고정된 방향으로 돌진 (2페이즈: 3연속)
+//             벽에 박히면 긴 경직(반격 타이밍), 아니면 짧은 경직. 2페이즈는 마지막 돌진 직후 투사체 연계
+// 패턴 3 투사체: 예열 동안 빛 구체 + 바닥 사선 경고 -> 부채꼴 직선 투사체 (비유도, 2페이즈: 5발 x 2번)
+// 11/19 - QA 피드백: 이동 속도/돌진 속도·거리 상향, 패턴 후딜레이 대폭 감소, 원거리 패턴 추가
 // 2페이즈(HP 50% 이하): 몸이 붉게 변하고 이동/패턴 간격이 빨라짐
 // 처치: 경험치(처치 배율 적용) + 특성 선택 1회 확정 + 엔딩 기록(처치 수). 게임은 계속 진행되고 조건을 다시 채우면 다음 보스 등장
 // 프리팹/애니메이터/UI는 Tools/Boss/Build Boss (Main) 메뉴로 생성
@@ -21,6 +25,7 @@ public class BossEnemy : MonoBehaviour, IDamageable
         Casting,
         DashWindup,
         Dashing,
+        ProjectileWindup,
         Recover,
         Dead
     }
@@ -30,23 +35,29 @@ public class BossEnemy : MonoBehaviour, IDamageable
     public float maxHP = 1500f;
     [SerializeField] private float currentHP = 0f;
     [SerializeField] private float exp = 1000f;
-    [SerializeField] private float moveSpeed = 3.5f;
-    [SerializeField] private float introTime = 2f;          // 등장 후 첫 행동까지 대기
+    [SerializeField] private float moveSpeed = 6.5f;        // 11/19 - 3.5 -> 6.5 (플레이어 이동 속도 10보다는 느리게)
+    [SerializeField] private float introTime = 1.2f;        // 등장 후 첫 행동까지 대기 (11/19 - 2 -> 1.2)
 
     [Header("=== 패턴 공통 ===")]
-    [SerializeField] private float patternCooldown = 2.5f;  // 패턴 사이 추적 시간 (11/15 - 3 -> 2.5)
-    [SerializeField] private float recoverTime = 0.7f;      // 장판 시전 후 쉬는 시간 (11/15 - 1 -> 0.7)
-    [SerializeField] private float nearDistance = 8f;       // 이 거리보다 멀면 돌진 확률이 높아짐
-    [Range(0f, 1f)] [SerializeField] private float dashChanceFar = 0.6f;
-    [Range(0f, 1f)] [SerializeField] private float dashChanceNear = 0.3f;
+    [SerializeField] private float patternCooldown = 1.2f;  // 패턴 사이 추적 시간 (11/19 - 2.5 -> 1.2)
+    [SerializeField] private float recoverTime = 0.15f;     // 장판/투사체 후 쉬는 시간 (11/19 - 0.7 -> 0.15)
+    [SerializeField] private float nearDistance = 10f;      // 이 거리 이상이면 '먼 거리' 확률 사용
+
+    // 11/19 - 패턴 선택 가중치 (합이 1이 아니어도 비율로 계산)
+    [Header("=== 패턴 확률: 먼 거리 ===")]
+    [SerializeField] private float farProjectileWeight = 0.45f;
+    [SerializeField] private float farDashWeight = 0.40f;
+    [SerializeField] private float farZoneWeight = 0.15f;
+    [Header("=== 패턴 확률: 가까운 거리 ===")]
+    [SerializeField] private float nearProjectileWeight = 0.15f;
+    [SerializeField] private float nearDashWeight = 0.25f;
+    [SerializeField] private float nearZoneWeight = 0.60f;
 
     [Header("=== 패턴 1: 장판 ===")]
-    [SerializeField] private float castTime = 1f;
+    [SerializeField] private float castTime = 0.6f;         // 11/19 - 1.0 -> 0.6
     [SerializeField] private float zoneRadius = 3f;
     [SerializeField] private float zoneWarningTime = 1f;    // 11/15 - 1.5 -> 1.0
-    [SerializeField] private float zoneActiveTime = 4f;
-    [SerializeField] private float zoneTickDamage = 8f;
-    [SerializeField] private float zoneTickInterval = 0.5f;
+    [SerializeField] private float zoneDamage = 20f;        // 11/19 - 지속 틱 데미지 -> 분출 즉발 데미지 (분출~사라질 때까지 닿으면 1회)
     // 11/15 - 난이도 상향: 한 번에 여러 개 (플레이어 위치 + 이동 예측 위치 + 주변)
     [SerializeField] private int zoneCount = 3;
     [SerializeField] private float zoneSpreadMin = 3f;      // 주변 장판의 플레이어로부터 거리
@@ -56,24 +67,42 @@ public class BossEnemy : MonoBehaviour, IDamageable
     [SerializeField] private float zoneWaveInterval = 0.7f; // 연속으로 깔릴 때 간격
 
     [Header("=== 패턴 2: 돌진 ===")]
-    [SerializeField] private float dashWindupTime = 0.8f;   // 11/15 - 1.0 -> 0.8
+    [SerializeField] private float dashWindupTime = 0.6f;   // 11/19 - 0.8 -> 0.6
     [Range(0f, 1f)] [SerializeField] private float dashTrackRatio = 0.6f; // 예열 앞부분은 플레이어를 따라 회전, 이후 방향 고정
-    [SerializeField] private float dashSpeed = 18f;
-    [SerializeField] private float dashDistance = 15f;
+    [SerializeField] private float dashSpeed = 30f;         // 11/19 - 18 -> 30
+    [SerializeField] private float dashDistance = 24f;      // 11/19 - 15 -> 24
     [SerializeField] private float dashDamage = 25f;
     [SerializeField] private float dashHitRadius = 1.8f;
     [SerializeField] private float dashKnockback = 14f;
-    [SerializeField] private float dashStunTime = 1.2f;     // 돌진 후 경직 (반격 타이밍) (11/15 - 1.5 -> 1.2)
+    [SerializeField] private float dashStunTime = 0.35f;    // 돌진 후 경직 (11/19 - 1.2 -> 0.35)
+    [SerializeField] private float dashWallStunTime = 1.5f; // 11/19 - 벽에 박혔을 때 경직 (반격 타이밍, 연속 돌진도 여기서 끊김)
+
+    // 11/19 - 패턴 3: 직선 투사체 (비유도)
+    [Header("=== 패턴 3: 투사체 ===")]
+    [SerializeField] private float projectileWindupTime = 0.4f;  // 예열 (방향은 예열 시작 시점에 고정)
+    [SerializeField] private int projectileCount = 3;            // 부채꼴 발 수
+    [SerializeField] private float projectileSpread = 12f;       // 발 사이 각도
+    [SerializeField] private float projectileSpeed = 35f;
+    [SerializeField] private float projectileRadius = 0.5f;
+    [SerializeField] private float projectileDamage = 15f;
+    [SerializeField] private float projectileLifetime = 2f;
+    [SerializeField] private float projectileFireHeight = 2.5f;  // 발사 위치 (보스 발밑 기준 높이)
+    [SerializeField] private float projectileFireForward = 1.6f; // 발사 위치 (보스 앞쪽 거리)
 
     [Header("=== 2페이즈 (HP 비율 이하) ===")]
     [Range(0f, 1f)] [SerializeField] private float phase2HPRatio = 0.5f;
     [SerializeField] private float phase2SpeedMultiplier = 1.2f;
-    [SerializeField] private float phase2Cooldown = 1.5f;          // 11/15 - 2 -> 1.5
+    [SerializeField] private float phase2Cooldown = 0.7f;          // 11/19 - 1.5 -> 0.7
     [SerializeField] private int phase2ZoneCount = 5;              // 11/15 - 3 -> 5
     [SerializeField] private float phase2ZoneWarningTime = 0.75f;  // 11/15 - 추가
     [SerializeField] private int phase2ZoneWaves = 2;              // 11/15 - 추가: 0.7초 간격으로 2번 연속 (두 번째는 그때의 플레이어 위치 기준)
     [SerializeField] private int phase2DashCount = 3;              // 11/15 - 2 -> 3
     [SerializeField] private float phase2SecondWindupTime = 0.45f; // 11/15 - 0.6 -> 0.45
+    [SerializeField] private int phase2ProjectileCount = 5;        // 11/19 - 투사체 부채꼴 발 수
+    [SerializeField] private int phase2ProjectileVolleys = 2;      // 11/19 - 연속 발사 횟수 (두 번째는 틈을 메우도록 반 칸 엇갈림)
+    [SerializeField] private float phase2VolleyInterval = 0.25f;
+    [SerializeField] private int phase2ComboProjectileCount = 3;   // 11/19 - 마지막 돌진 직후 연계 투사체
+    [SerializeField] private float phase2ComboWindupTime = 0.25f;
     [SerializeField] private Color phase2Tint = new Color(1f, 0.55f, 0.55f, 1f);
     [SerializeField] private Color phase2Emission = new Color(0.35f, 0.02f, 0.02f, 1f);
 
@@ -119,6 +148,20 @@ public class BossEnemy : MonoBehaviour, IDamageable
     private int dashesRemaining;
     private Transform dashTelegraph;
     private Renderer dashTelegraphRenderer;
+    private bool dashBlocked;
+
+    // 투사체
+    private float projectileWindup;
+    private int projectileShotCount;
+    private int volleysRemaining;
+    private int volleysFired;
+    private float volleyTimer;
+    private bool projectileFiring;
+    private Vector3 projectileAim;
+    private Transform projectileTelegraph;
+    private Transform projectileOrb;
+    private Renderer projectileOrbRenderer;
+    private readonly List<Renderer> projectileLineRenderers = new List<Renderer>();
 
     // 피격 연출
     private Renderer[] bodyRenderers;
@@ -226,6 +269,7 @@ public class BossEnemy : MonoBehaviour, IDamageable
             case BossState.Casting: UpdateCasting(dt); break;
             case BossState.DashWindup: UpdateDashWindup(dt); break;
             case BossState.Dashing: UpdateDashing(dt); break;
+            case BossState.ProjectileWindup: UpdateProjectile(dt); break;
             case BossState.Recover: UpdateRecover(dt); break;
         }
 
@@ -281,9 +325,21 @@ public class BossEnemy : MonoBehaviour, IDamageable
     private void ChoosePattern()
     {
         float distance = FlatDistance(transform.position, player.position);
-        float dashChance = distance >= nearDistance ? dashChanceFar : dashChanceNear;
+        bool far = distance >= nearDistance;
 
-        if (Random.value < dashChance)
+        float projectileWeight = Mathf.Max(0f, far ? farProjectileWeight : nearProjectileWeight);
+        float dashWeight = Mathf.Max(0f, far ? farDashWeight : nearDashWeight);
+        float zoneWeight = Mathf.Max(0f, far ? farZoneWeight : nearZoneWeight);
+        float total = projectileWeight + dashWeight + zoneWeight;
+        float roll = Random.value * (total > 0f ? total : 1f);
+
+        if (roll < projectileWeight)
+        {
+            EnterProjectileWindup(projectileWindupTime,
+                isPhase2 ? phase2ProjectileCount : projectileCount,
+                isPhase2 ? phase2ProjectileVolleys : 1);
+        }
+        else if (roll < projectileWeight + dashWeight)
         {
             dashesRemaining = isPhase2 ? Mathf.Max(1, phase2DashCount) : 1;
             EnterDashWindup(dashWindupTime);
@@ -328,13 +384,13 @@ public class BossEnemy : MonoBehaviour, IDamageable
 
     private void SpawnZones()
     {
-        float tickDamage = zoneTickDamage * damageMultiplier;
+        float hitDamage = zoneDamage * damageMultiplier;
         float warning = isPhase2 ? phase2ZoneWarningTime : zoneWarningTime;
         int count = Mathf.Max(1, isPhase2 ? phase2ZoneCount : zoneCount);
         int spawned = 0;
 
         // 1. 시전 순간의 플레이어 위치
-        SpawnZoneAt(player.position, tickDamage, warning);
+        SpawnZoneAt(player.position, hitDamage, warning);
         spawned++;
 
         // 2. 이동 중이면 예측 위치 (가만히 있어도, 한 방향으로 계속 달려도 피하기 어렵게)
@@ -347,7 +403,7 @@ public class BossEnemy : MonoBehaviour, IDamageable
                 Vector3 predicted = player.position + velocity * zonePredictTime;
                 if (FlatDistance(predicted, player.position) > zoneRadius) // 첫 장판과 거의 겹치면 생략
                 {
-                    SpawnZoneAt(predicted, tickDamage, warning);
+                    SpawnZoneAt(predicted, hitDamage, warning);
                     spawned++;
                 }
             }
@@ -361,11 +417,11 @@ public class BossEnemy : MonoBehaviour, IDamageable
             float angle = (startAngle + 360f * i / extra + Random.Range(-20f, 20f)) * Mathf.Deg2Rad;
             float distance = Random.Range(zoneSpreadMin, zoneSpreadMax);
             Vector3 offset = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * distance;
-            SpawnZoneAt(player.position + offset, tickDamage, warning);
+            SpawnZoneAt(player.position + offset, hitDamage, warning);
         }
     }
 
-    private void SpawnZoneAt(Vector3 position, float tickDamage, float warningTime)
+    private void SpawnZoneAt(Vector3 position, float hitDamage, float warningTime)
     {
         // NavMesh 위의 가장 가까운 지점 = 바닥 높이 (플레이어 피벗 높이, 점프 여부와 무관하게 바닥에 깔림)
         if (NavMesh.SamplePosition(position, out NavMeshHit hit, 4f, NavMesh.AllAreas))
@@ -373,7 +429,7 @@ public class BossEnemy : MonoBehaviour, IDamageable
             position = hit.position;
         }
 
-        BossHazardZone.Spawn(position, zoneRadius, warningTime, zoneActiveTime, tickDamage, zoneTickInterval, player);
+        BossHazardZone.Spawn(position, zoneRadius, warningTime, hitDamage, player);
     }
 
     // 패턴 2: 돌진 ----------------------------------------------------
@@ -417,6 +473,7 @@ public class BossEnemy : MonoBehaviour, IDamageable
         dashTraveled = 0f;
         dashHitPlayer = false;
         dashMaxDistance = GetDashLength();
+        dashBlocked = dashMaxDistance < dashDistance - 0.01f; // 끝에 벽/맵 끝이 있음
         DestroyDashTelegraph();
         SetTrigger(AnimDash);
 
@@ -439,18 +496,27 @@ public class BossEnemy : MonoBehaviour, IDamageable
 
         CheckDashHit();
 
-        bool blocked = moved < step * 0.3f;
+        // 돌진 거리는 벽까지로 잘려 있으므로(GetDashLength), 벽 앞에서 끝났거나 이동이 막히면 벽에 박힌 것
+        bool blocked = moved < step * 0.3f || (dashBlocked && dashTraveled >= dashMaxDistance);
         if (dashTraveled >= dashMaxDistance || blocked)
         {
             if (blocked)
             {
-                CameraShake.Shake(0.12f, 0.25f); // 벽에 부딪힘
+                // 11/19 - 벽꿍: 연속 돌진도 끊고 긴 경직 (돌진을 벽으로 유도하는 플레이 보상)
+                CameraShake.Shake(0.2f, 0.35f);
+                EnterRecover(dashWallStunTime, true);
+                return;
             }
 
             dashesRemaining--;
             if (dashesRemaining > 0)
             {
                 EnterDashWindup(phase2SecondWindupTime);
+            }
+            else if (isPhase2)
+            {
+                // 11/19 - 2페이즈 연계: 마지막 돌진 직후 착지 지점에서 바로 투사체
+                EnterProjectileWindup(phase2ComboWindupTime, phase2ComboProjectileCount, 1);
             }
             else
             {
@@ -540,6 +606,146 @@ public class BossEnemy : MonoBehaviour, IDamageable
         }
     }
 
+    // 패턴 3: 투사체 ---------------------------------------------------
+
+    private void EnterProjectileWindup(float windupTime, int shotCount, int volleys)
+    {
+        state = BossState.ProjectileWindup;
+        stateTimer = 0f;
+        projectileWindup = windupTime;
+        projectileShotCount = Mathf.Max(1, shotCount);
+        volleysRemaining = Mathf.Max(1, volleys);
+        volleysFired = 0;
+        projectileFiring = false;
+        StopMoving();
+        SetTrigger(AnimCast);
+
+        // 방향은 예열 시작 시점에 고정 (비유도)
+        Vector3 flat = FlatDirection(transform.position, player.position);
+        transform.rotation = Quaternion.LookRotation(flat);
+        projectileAim = (GetPlayerAimPoint() - GetFireOrigin()).normalized;
+
+        CreateProjectileTelegraph();
+    }
+
+    private void UpdateProjectile(float dt)
+    {
+        stateTimer += dt;
+
+        if (!projectileFiring)
+        {
+            UpdateProjectileTelegraph(Mathf.Clamp01(stateTimer / Mathf.Max(0.01f, projectileWindup)));
+
+            if (stateTimer >= projectileWindup)
+            {
+                DestroyProjectileTelegraph();
+                projectileFiring = true;
+                volleyTimer = 0f;
+            }
+            return;
+        }
+
+        volleyTimer -= dt;
+        if (volleyTimer <= 0f && volleysRemaining > 0)
+        {
+            // 두 번째 발사는 반 칸 엇갈려서 첫 발사의 틈을 메움
+            float offset = (volleysFired % 2 == 1) ? projectileSpread * 0.5f : 0f;
+            FireVolley(offset);
+            volleysFired++;
+            volleysRemaining--;
+            volleyTimer = phase2VolleyInterval;
+        }
+
+        if (volleysRemaining <= 0)
+        {
+            EnterRecover(recoverTime, false);
+        }
+    }
+
+    private void FireVolley(float angleOffset)
+    {
+        Vector3 origin = GetFireOrigin();
+        float damage = projectileDamage * damageMultiplier;
+
+        for (int i = 0; i < projectileShotCount; i++)
+        {
+            float angle = (i - (projectileShotCount - 1) * 0.5f) * projectileSpread + angleOffset;
+            Vector3 direction = Quaternion.AngleAxis(angle, Vector3.up) * projectileAim;
+            BossProjectile.Spawn(origin, direction, projectileSpeed, projectileRadius, damage, projectileLifetime, player, gameObject);
+        }
+
+        CameraShake.Shake(0.05f, 0.12f);
+    }
+
+    private Vector3 GetFireOrigin()
+    {
+        return transform.position + Vector3.up * projectileFireHeight + transform.forward * projectileFireForward;
+    }
+
+    // 플레이어 몸통 중심 (콜라이더가 있으면 그 중심, 없으면 피벗 + 1m)
+    private Vector3 GetPlayerAimPoint()
+    {
+        Collider playerCollider = player.GetComponent<Collider>();
+        return playerCollider != null ? playerCollider.bounds.center : player.position + Vector3.up;
+    }
+
+    private void CreateProjectileTelegraph()
+    {
+        DestroyProjectileTelegraph();
+
+        projectileTelegraph = new GameObject("Boss Projectile Telegraph").transform;
+
+        // 발사 위치에 커지는 빛 구체
+        projectileOrb = BossVisuals.CreateOrb("Orb", projectileTelegraph, out projectileOrbRenderer);
+        projectileOrb.position = GetFireOrigin();
+        projectileOrb.localScale = Vector3.zero;
+
+        // 바닥에 발사 방향 사선 (FPS 시점에서도 보이도록 바닥에 그림)
+        projectileLineRenderers.Clear();
+        Vector3 flatAim = new Vector3(projectileAim.x, 0f, projectileAim.z).normalized;
+        if (flatAim.sqrMagnitude < 0.0001f) flatAim = transform.forward;
+
+        for (int i = 0; i < projectileShotCount; i++)
+        {
+            float angle = (i - (projectileShotCount - 1) * 0.5f) * projectileSpread;
+            Vector3 direction = Quaternion.AngleAxis(angle, Vector3.up) * flatAim;
+
+            var lineRoot = new GameObject("Line").transform;
+            lineRoot.SetParent(projectileTelegraph, false);
+            lineRoot.position = transform.position + Vector3.up * 0.06f;
+            lineRoot.rotation = Quaternion.LookRotation(direction);
+            BossVisuals.CreateStrip("Strip", lineRoot, 0.35f, projectileSpeed * projectileLifetime * 0.5f, out Renderer lineRenderer);
+            projectileLineRenderers.Add(lineRenderer);
+        }
+    }
+
+    private void UpdateProjectileTelegraph(float t)
+    {
+        if (projectileOrb != null)
+        {
+            projectileOrb.localScale = Vector3.one * Mathf.Lerp(0.2f, projectileRadius * 2.4f, t);
+            BossVisuals.SetColor(projectileOrbRenderer, new Color(1f, 0.35f, 0.15f, 1f), Mathf.Lerp(0.5f, 0.95f, t));
+        }
+
+        float blink = 0.5f + 0.5f * Mathf.Sin(stateTimer * 14f * Mathf.PI * 2f);
+        foreach (Renderer lineRenderer in projectileLineRenderers)
+        {
+            BossVisuals.SetColor(lineRenderer, new Color(1f, 0.3f, 0.1f, 1f), Mathf.Lerp(0.2f, 0.55f, blink));
+        }
+    }
+
+    private void DestroyProjectileTelegraph()
+    {
+        if (projectileTelegraph != null)
+        {
+            Destroy(projectileTelegraph.gameObject);
+            projectileTelegraph = null;
+        }
+        projectileOrb = null;
+        projectileOrbRenderer = null;
+        projectileLineRenderers.Clear();
+    }
+
     // 회복/경직 ------------------------------------------------------
 
     private void EnterRecover(float time, bool stunned)
@@ -606,6 +812,7 @@ public class BossEnemy : MonoBehaviour, IDamageable
         state = BossState.Dead;
 
         DestroyDashTelegraph();
+        DestroyProjectileTelegraph();
         StopMoving();
 
         foreach (Collider bodyCollider in GetComponentsInChildren<Collider>())
@@ -643,6 +850,7 @@ public class BossEnemy : MonoBehaviour, IDamageable
     private void OnDestroy()
     {
         DestroyDashTelegraph();
+        DestroyProjectileTelegraph();
     }
 
     // 몸 색 (피격 깜빡임 + 2페이즈 붉은색) -----------------------------
