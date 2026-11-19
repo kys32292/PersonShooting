@@ -151,17 +151,22 @@ public static class BossSpikes
         {
             materialsLoaded = true;
 
-            // 몸체: 보스 몬스터와 같은 셀 셰이더 (몬스터 머티리얼이 쓰고 있어 빌드에 포함됨)
-            Shader cel = Shader.Find("PVFX/PVFX_URP_Low_CelShader1.0");
-            if (cel == null) cel = Shader.Find("Universal Render Pipeline/Lit");
-            if (cel == null) cel = Shader.Find("Sprites/Default");
-            bodyMaterial = new Material(cel) { name = "BossSpikeBody" };
-            if (bodyMaterial.HasProperty("_Color")) bodyMaterial.SetColor("_Color", BodyColor);
-            if (bodyMaterial.HasProperty("_BaseColor")) bodyMaterial.SetColor("_BaseColor", BodyColor);
-            if (bodyMaterial.HasProperty("_EmissionColor")) bodyMaterial.SetColor("_EmissionColor", BodyEmission);
-            if (bodyMaterial.HasProperty("_OutlineWidth")) bodyMaterial.SetFloat("_OutlineWidth", 0f); // 외곽선은 따로 그림
-            if (bodyMaterial.HasProperty("_RimColor")) bodyMaterial.SetColor("_RimColor", new Color(1f, 0.45f, 0.4f, 1f));
-            if (bodyMaterial.HasProperty("_RimIntensity")) bodyMaterial.SetFloat("_RimIntensity", 0.6f);
+            // 몸체: 11/19 - 셀 셰이더는 URP 씬에서 탁하고 흐릿하게 보여서, 씬 조명과 무관하게 선명한 전용 셰이더 사용
+            // (Resources/BossSpikeBody: 밑동 -> 끝 붉은 그라데이션 + 면마다 2단 음영 + 림. 색은 셰이더 기본값)
+            Shader spikeShader = Resources.Load<Shader>("BossSpikeBody");
+            if (spikeShader != null)
+            {
+                bodyMaterial = new Material(spikeShader) { name = "BossSpikeBody" };
+            }
+            else
+            {
+                Debug.LogWarning("[Boss] Resources/BossSpikeBody 셰이더를 찾지 못해 셀 셰이더로 표시합니다.");
+                Shader cel = Shader.Find("PVFX/PVFX_URP_Low_CelShader1.0");
+                if (cel == null) cel = Shader.Find("Universal Render Pipeline/Lit");
+                if (cel == null) cel = Shader.Find("Sprites/Default");
+                bodyMaterial = new Material(cel) { name = "BossSpikeBody" };
+                SetupFallbackBody(bodyMaterial);
+            }
 
             // 외곽선: Resources 폴더의 셰이더 (Resources에 있어야 빌드에 포함됨)
             Shader outline = Resources.Load<Shader>("BossSpikeOutline");
@@ -176,6 +181,17 @@ public static class BossSpikes
                 Debug.LogWarning("[Boss] Resources/BossSpikeOutline 셰이더를 찾지 못해 가시 외곽선 없이 표시합니다.");
             }
         }
+    }
+
+    // 전용 셰이더가 없을 때만 쓰는 대체 설정 (셀 셰이더/URP Lit)
+    private static void SetupFallbackBody(Material material)
+    {
+        if (material.HasProperty("_Color")) material.SetColor("_Color", BodyColor);
+        if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", BodyColor);
+        if (material.HasProperty("_EmissionColor")) material.SetColor("_EmissionColor", BodyEmission);
+        if (material.HasProperty("_OutlineWidth")) material.SetFloat("_OutlineWidth", 0f); // 외곽선은 따로 그림
+        if (material.HasProperty("_RimColor")) material.SetColor("_RimColor", new Color(1f, 0.45f, 0.4f, 1f));
+        if (material.HasProperty("_RimIntensity")) material.SetFloat("_RimIntensity", 0.6f);
     }
 
     // 높이 1짜리 가시. flat = true면 면마다 정점을 따로 둬서 각진 음영(몸체), false면 정점 공유로 부드러운 노멀(외곽선)
