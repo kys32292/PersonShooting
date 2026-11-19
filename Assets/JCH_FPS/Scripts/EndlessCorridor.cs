@@ -8,6 +8,7 @@ public sealed class EndlessCorridor : MonoBehaviour
     [SerializeField] private Transform stageSection;
     [SerializeField] private Transform player;
     [SerializeField] private Transform spawnPoints;
+    [SerializeField, Min(48f)] private float sectionWidth = 48f;
 
     
     private const float SectionLength = 48f;
@@ -88,7 +89,7 @@ public sealed class EndlessCorridor : MonoBehaviour
                 propGroups[slot].SetParent(sections[slot], false);
             }
             if (propSet != null)
-                propSet.Populate(propGroups[slot], index, propSeed, SectionLength);
+                propSet.Populate(propGroups[slot], index, propSeed, SectionLength, sectionWidth);
         }
     }
 

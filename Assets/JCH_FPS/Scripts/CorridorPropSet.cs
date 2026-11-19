@@ -10,7 +10,7 @@ public sealed class CorridorPropSet : ScriptableObject
     [SerializeField] private GameObject[] smallProps;
     [SerializeField] private GameObject[] wallProps;
 
-    public void Populate(Transform parent, int sectionIndex, int runSeed, float sectionLength)
+    public void Populate(Transform parent, int sectionIndex, int runSeed, float sectionLength, float sectionWidth = 48f)
     {
         foreach (Transform child in parent)
         {
@@ -38,7 +38,7 @@ public sealed class CorridorPropSet : ScriptableObject
             if (prefab == null)
                 continue;
             float x = -sectionLength * 0.5f + (i + Range(random, 0.42f, 0.58f)) * spacing;
-            float z = onWall ? side * 24f : FloorDepth(random, side);
+            float z = onWall ? side * (sectionWidth * 0.5f) : FloorDepth(random, side);
             float height = onWall ? Range(random, 3.3f, 5.8f) : 0f;
             float yaw = onWall ? side * 90f : random.Next(2) * 180f + Range(random, -8f, 8f);
             Place(prefab, parent, new Vector3(x, height, z), yaw, onWall);
