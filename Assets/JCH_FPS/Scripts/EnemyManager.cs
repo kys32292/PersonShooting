@@ -18,6 +18,83 @@ public class EnemyManager : MonoBehaviour
         {
             SpawnEnemy();
         }
+
+        RelocateFarEnemies(); // 11/22 - 너무 멀어진 적을 플레이어 근처로 재배치
+    }
+
+    // 11/22 - 먼 적 재배치 ---------------------------------------
+    // relocateCheckInterval마다 검사해서 플레이어와 relocateDistance보다 먼 일반 적(보스 제외)을
+    // 플레이어와 가까운 스폰 포인트로 옮김. 여러 마리가 한 점에 겹치지 않도록 가까운 포인트 몇 곳을 돌아가며 사용
+
+    [Header("=== 먼 적 재배치 ===")]
+    [SerializeField]
+    private float relocateDistance = 60f;
+    [SerializeField]
+    private float relocateCheckInterval = 1f;
+    [SerializeField]
+    private int relocateNearestPointCount = 3; // 플레이어와 가까운 스폰 포인트 중 몇 곳을 돌아가며 쓸지
+
+    private float relocateTimer = 0f;
+    private Transform playerTransform;
+
+    private void RelocateFarEnemies()
+    {
+        if (GameManager.Instance != null && GameManager.Instance.isPaused) return;
+        if (spawnPoints.Count == 0) return;
+
+        relocateTimer += Time.deltaTime;
+        if (relocateTimer < relocateCheckInterval) return;
+        relocateTimer = 0f;
+
+        if (playerTransform == null)
+        {
+            GameObject player = GameObject.FindGameObjectWithTag("Player");
+            if (player == null) return;
+            playerTransform = player.transform;
+        }
+
+        Vector3 playerPos = playerTransform.position;
+        float limitSqr = relocateDistance * relocateDistance;
+        List<Transform> nearestPoints = null;
+        int nextPoint = 0;
+
+        foreach (EnemyBase enemy in FindObjectsByType<EnemyBase>(FindObjectsSortMode.None))
+        {
+            if (enemy.IsDead) continue;
+            if ((enemy.transform.position - playerPos).sqrMagnitude <= limitSqr) continue;
+
+            // 옮길 적이 있을 때만 가까운 스폰 포인트 목록을 계산
+            if (nearestPoints == null)
+            {
+                nearestPoints = new List<Transform>();
+                foreach (Transform point in spawnPoints)
+                {
+                    if (point != null) nearestPoints.Add(point);
+                }
+                if (nearestPoints.Count == 0) return;
+
+                nearestPoints.Sort((a, b) =>
+                    (a.position - playerPos).sqrMagnitude.CompareTo((b.position - playerPos).sqrMagnitude));
+            }
+
+            int usable = Mathf.Clamp(relocateNearestPointCount, 1, nearestPoints.Count);
+            Vector3 target = nearestPoints[nextPoint % usable].position;
+            nextPoint++;
+
+            UnityEngine.AI.NavMeshAgent agent = enemy.GetComponent<UnityEngine.AI.NavMeshAgent>();
+            if (agent != null && agent.enabled)
+            {
+                // NavMesh 위의 가장 가까운 지점으로 순간이동 (못 찾으면 이번엔 건너뜀)
+                if (UnityEngine.AI.NavMesh.SamplePosition(target, out UnityEngine.AI.NavMeshHit hit, 5f, agent.areaMask))
+                {
+                    agent.Warp(hit.position);
+                }
+            }
+            else
+            {
+                enemy.transform.position = target;
+            }
+        }
     }
 
     // 적 소환 -------------------------------------------

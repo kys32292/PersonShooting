@@ -54,9 +54,13 @@ MonoBehaviour:
   exp: 100
   playerPrefab: {fileID: 0}
   targetPlayer: {fileID: 0}
+  moveSpeed: 10
   damage: 50
   attackRange: 5
   attackRate: 1
+  wallLayer:
+    serializedVersion: 2
+    m_Bits: 0
   animator: {fileID: 0}
   explosionRadius: 7.5
 --- !u!54 &6151325760380614099

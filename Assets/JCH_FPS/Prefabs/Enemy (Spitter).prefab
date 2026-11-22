@@ -55,6 +55,7 @@ MonoBehaviour:
   exp: 100
   playerPrefab: {fileID: 0}
   targetPlayer: {fileID: 0}
+  moveSpeed: 10
   damage: 10
   attackRange: 2
   attackRate: 1

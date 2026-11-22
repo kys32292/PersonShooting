@@ -129,7 +129,7 @@ public class EnemyBase : MonoBehaviour, IDamageable
 
     // 이동 ----------------------------------------------------------
 
-    private float moveSpeed = 5f;
+    public float moveSpeed = 5f;
 
     private void SetSpeed(float _speed)
     {

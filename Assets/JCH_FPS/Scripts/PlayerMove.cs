@@ -24,6 +24,10 @@ public class PlayerMove : MonoBehaviour, IDamageable
         rb = GetComponent<Rigidbody>();
         col = GetComponent<Collider>();
 
+        // 11/22 - 회전 버그 수정: 프리펩의 Rigidbody가 Y축 회전을 고정하지 않아 회전 중 생긴 물리 회전 속도가
+        // 일시정지(특성 선택) 동안 계속 적용되어 화면이 돌았음. 회전은 마우스로만 하므로 물리 회전을 모두 고정
+        rb.freezeRotation = true;
+
         mainCamera = Camera.main;
         mouseSensitivity = GameSettings.MouseSensitivity; // 2026-11-01: 타이틀 설정 화면 값 적용
 
@@ -39,8 +43,11 @@ public class PlayerMove : MonoBehaviour, IDamageable
     {
         if(GameManager.Instance != null && GameManager.Instance.isPaused)
         {
+            FreezePhysics(true); // 11/22 - 멈춘 동안 미끄러짐/회전 정지
             return;
         }
+
+        FreezePhysics(false); // 11/22 - 재개 시 멈추기 전 속도 복원
 
         MovePlayer(InputMoveKey());
         RotatePlayer();
@@ -48,6 +55,31 @@ public class PlayerMove : MonoBehaviour, IDamageable
         FireGun();
         CountFireRate();
         Reload();
+    }
+
+    // 11/22 - 일시정지 중 물리 정지 ---------------------------
+    // 특성 선택은 timeScale을 멈추지 않아 물리가 계속 돌기 때문에 Rigidbody를 잠시 Kinematic으로 바꿔 멈춰 둠
+    private bool physicsFrozen = false;
+    private Vector3 frozenVelocity;
+
+    private void FreezePhysics(bool freeze)
+    {
+        if (rb == null || physicsFrozen == freeze) return;
+        physicsFrozen = freeze;
+
+        if (freeze)
+        {
+            frozenVelocity = rb.velocity;
+            rb.velocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            rb.isKinematic = true;
+        }
+        else
+        {
+            rb.isKinematic = false;
+            rb.velocity = frozenVelocity;
+            rb.angularVelocity = Vector3.zero;
+        }
     }
 
     // 이동 ------------------------------------

@@ -78,6 +78,20 @@ public class GameManager : MonoBehaviour
 
         // 11/15 - ESC 처리 삭제: Main 씬에서 ESCPausePanel이 비어 있어 ESC마다 NullReferenceException이 났고,
         // 일시정지는 이미 PauseMenuController가 담당하고 있어 중복 처리였음
+
+        UpdateCursor(); // 11/22 - 상황에 맞게 마우스 커서 표시/숨김
+    }
+
+    // 11/22 - 마우스 커서 ----------------------------------------
+    // 일시정지(ESC)·특성 선택·게임 오버 중에는 커서를 보이고, 싸울 수 있을 때는 숨기고 화면 중앙에 고정
+    // (타이틀/엔딩 씬은 각 컨트롤러가 커서를 보이게 해둠)
+    private void UpdateCursor()
+    {
+        bool showCursor = isPaused || isGameOver;
+
+        CursorLockMode lockMode = showCursor ? CursorLockMode.None : CursorLockMode.Locked;
+        if (Cursor.lockState != lockMode) Cursor.lockState = lockMode;
+        if (Cursor.visible != showCursor) Cursor.visible = showCursor;
     }
 
     // 11/15 - 보스 ----------------------------------------
