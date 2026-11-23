@@ -10,12 +10,24 @@ public class Bomber : EnemyBase
         Explode();
     }
 
-    [Header("폭발 범위")]
+    [Header("폭발 피해 반경")]
+    // 2026-11-23: 실제 범위 피해만 반경 0.5로 축소하며 VFX 외형 크기는 아래 기준값으로 분리합니다.
+    [Tooltip("자폭 피해 반경입니다. VFX 크기는 바꾸지 않습니다.")]
     [SerializeField]
-    private float explosionRadius = 5f;
+    private float explosionRadius = 0.5f;
+    // 2026-11-23: 기존 VFX 기준 반경 7.5를 유지해 사용자가 줄여 둔 Config 배율이 중복 축소되지 않게 합니다.
+    [Header("폭발 VFX 기준 반경")]
+    [Tooltip("VfxConfig의 폭발 외형 크기 배율에 곱할 기준 반경입니다. 실제 피해 반경과 독립적입니다.")]
+    [SerializeField, Min(0.01f)] private float explosionVfxRadius = 7.5f;
+    public float ExplosionVfxRadius => explosionVfxRadius;
+    // 2026-11-23: 테스트 씬이 실제 프리팹의 피해 반경으로 VFX를 비교하도록 읽기 전용으로 공개합니다.
+    public float ExplosionRadius => explosionRadius;
 
     private void Explode()
     {
+        // 2026-11-23: 자폭 공격에만 노란 구형 화염을 재생합니다. 일반 피격 사망과 기존 피해 판정은 유지합니다.
+        // 2026-11-23: 피해 반경 대신 독립적인 시각 기준 반경으로 호출하여 조절된 외형 크기를 유지합니다.
+        PesonShooting.VFX.VfxService.PlayBomberExplosion(transform.position, explosionVfxRadius);
         Collider[] hirCols = Physics.OverlapSphere(transform.position, explosionRadius);
 
         foreach(Collider col in hirCols)

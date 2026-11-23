@@ -72,7 +72,8 @@ public class SpecialAttackController : MonoBehaviour
             return;
         }
 
-        SpecialProjectile.Spawn(entry.perk.perkType, entry.perk.special, origin, direction, damage, gameObject);
+        // 2026-11-23: 중력탄 범위와 비행 VFX 크기를 발사 시점 퍽 레벨에 맞추기 위해 레벨을 전달합니다.
+        SpecialProjectile.Spawn(entry.perk.perkType, entry.perk.special, origin, direction, damage, gameObject, entry.level);
     }
 
     private void OnDestroy()

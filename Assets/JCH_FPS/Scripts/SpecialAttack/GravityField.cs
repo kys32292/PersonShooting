@@ -11,9 +11,13 @@ public class GravityField : MonoBehaviour
     private float damage;
     private float elapsed = 0f;
     private float tickTimer = 0f;
-    private Transform visual;
+    // 2026-11-23: 공유 퍽 데이터와 별도로 발사 시 확정된 레벨별 실제 반경을 보관합니다.
+    private float radius;
+    // 2026-11-23: 기존 구체 연출용 필드는 보관만 하고 새 VFX로 대체합니다.
+    // private Transform visual;
 
-    public static GravityField Create(Vector3 position, SpecialAttackSettings settings, float damage)
+    // 2026-11-23: 반경을 생략한 기존 호출은 퍽의 기본 반경을 그대로 사용합니다.
+    public static GravityField Create(Vector3 position, SpecialAttackSettings settings, float damage, float effectiveRadius = -1f)
     {
         var go = new GameObject("GravityField");
         go.transform.position = position;
@@ -21,12 +25,18 @@ public class GravityField : MonoBehaviour
         GravityField field = go.AddComponent<GravityField>();
         field.settings = settings;
         field.damage = damage;
+        // 2026-11-23: 판정과 외형의 반경이 같도록 한 번만 확정합니다.
+        field.radius = Mathf.Max(0.001f, effectiveRadius >= 0f ? effectiveRadius : settings.radius);
 
-        Color color = settings.color;
-        color.a = 0.25f;
-        field.visual = SpecialAttackUtil.CreateSphere(color).transform;
-        field.visual.SetParent(go.transform, false);
-        field.visual.localScale = Vector3.one * settings.radius * 2f;
+        // 2026-11-23: 이전의 반투명 구체 생성 코드를 주석으로 보관합니다.
+        // Color color = settings.color;
+        // color.a = 0.25f;
+        // field.visual = SpecialAttackUtil.CreateSphere(color).transform;
+        // field.visual.SetParent(go.transform, false);
+        // field.visual.localScale = Vector3.one * settings.radius * 2f;
+
+        // 2026-11-23: 중력탄의 실제 착탄 위치에 Config 기반 흡입 입자/반구 연출을 생성합니다.
+        PesonShooting.VFX.VfxService.AttachGravityWell(go.transform, field.radius, settings.duration);
 
         return field;
     }
@@ -44,12 +54,13 @@ public class GravityField : MonoBehaviour
             return;
         }
 
-        // 크기가 살짝 맥동하는 연출
-        float pulse = 1f + Mathf.Sin(elapsed * 20f) * 0.05f;
-        visual.localScale = Vector3.one * settings.radius * 2f * pulse;
+        // 2026-11-23: 기존 구체 맥동도 비활성화합니다. 새 VFX의 맥동은 GravityWellVfx가 담당합니다.
+        // float pulse = 1f + Mathf.Sin(elapsed * 20f) * 0.05f;
+        // visual.localScale = Vector3.one * settings.radius * 2f * pulse;
 
         Vector3 center = transform.position;
-        Collider[] colliders = Physics.OverlapSphere(center, settings.radius, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
+        // 2026-11-23: 강화된 반경으로 끌어당김/지속 피해 대상을 함께 검사합니다.
+        Collider[] colliders = Physics.OverlapSphere(center, radius, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
 
         tickTimer += dt;
         bool doDamage = tickTimer >= TickInterval;

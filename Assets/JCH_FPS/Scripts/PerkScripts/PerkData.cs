@@ -77,6 +77,16 @@ public class SpecialAttackSettings
     public float duration = 2f;
 
     [Header("중력자탄")]
+    // 2026-11-23: 퍽 레벨에 따른 중력장 반경 증가량. 다른 특수탄의 범위는 변경하지 않습니다.
+    [Tooltip("중력탄 레벨이 1 오를 때 추가되는 반경(월드 단위). 0이면 기존 고정 범위")]
+    [Min(0f)] public float gravityRadiusPerLevel = 0.5f; // 2026-11-23: 기본 레벨당 증가량을 0.5로 조정합니다.
+
+    // 2026-11-23: 공유 ScriptableObject를 수정하지 않고 발사 시점 레벨의 범위를 계산합니다.
+    public float GetGravityRadius(int level)
+    {
+        return Mathf.Max(0.001f, radius + Mathf.Max(0f, gravityRadiusPerLevel) * Mathf.Max(0, level - 1));
+    }
+
     public float pullSpeed = 8f;
     [Tooltip("끌어당기는 동안 초당 피해 = 피해 x 이 값")]
     public float pullDamagePerSecond = 0.5f;

@@ -9,6 +9,8 @@ public class PlayerMove : MonoBehaviour, IDamageable
     [Header("체력")]
     public float maxHP = 100f;
     private float currentHP = 0f;
+    // 2026-11-23: 플레이어에 화면 효과를 자동 연결하여 씬/프리팹마다 수동 등록할 필요가 없게 합니다.
+    private PesonShooting.VFX.PlayerHitVfx playerHitVfx;
 
     [Header("이동 속도")]
     [SerializeField]
@@ -33,6 +35,10 @@ public class PlayerMove : MonoBehaviour, IDamageable
 
         currentHP = maxHP;
         currentAmmo = magazineSize;
+
+        // 2026-11-23: 초기 체력부터 회복/피격까지 같은 화면 테두리 상태를 유지합니다.
+        playerHitVfx = gameObject.AddComponent<PesonShooting.VFX.PlayerHitVfx>();
+        playerHitVfx.Initialize(currentHP, mainCamera);
 
         RefreshHPUI();
         RefreshAmmoUI(currentAmmo.ToString()); // 2026-10-06: Main 탄환 UI와 맞춰 "현재/용량" 분리 표시로 변경
@@ -506,6 +512,8 @@ public class PlayerMove : MonoBehaviour, IDamageable
 
     private void RefreshHPUI()
     {
+        // 2026-11-23: 퍽으로 최대 체력이 늘며 회복되는 경우에도 피 테두리를 갱신합니다.
+        if (playerHitVfx != null) playerHitVfx.SetHealth(currentHP);
         if (hpBar != null)
         {
             hpBar.fillAmount = currentHP / maxHP;
@@ -545,6 +553,8 @@ public class PlayerMove : MonoBehaviour, IDamageable
         currentHP -= _damage;
         currentHP = Mathf.Max(currentHP, 0); // currentHP 값이 음수로 내려가지 않게 하기 위함
 
+        // 2026-11-23: 실제 양수 피해에만 약한 화면 흔들림을 추가합니다. 기존 피해/사망 처리는 유지합니다.
+        if (_damage > 0f && playerHitVfx != null) playerHitVfx.PlayHit();
         RefreshHPUI();
 
         if (IsDead) // 데미지를 받은 뒤 죽었을 경우 Die를 호출

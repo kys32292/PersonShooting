@@ -12,100 +12,98 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b8a24ff70d57d9b45bd33656368683bb, type: 3}
   m_Name: TestWave
   m_EditorClassIdentifier: 
+  # 2026-11-23: 일반 1단계 10마리 / 원거리 2단계 3마리 / 폭발 4단계 2마리로 첫 등장합니다.
+  # 종류별 첫 등장 이후 매 단계 직전 count x 1.5를 올림하며, 폭발 몬스터도 5단계부터 계속 증가합니다.
+  # enemyPrefab은 적 종류, count는 해당 단계 소환 수입니다. spawnInterval(다음 단계까지 대기 초)은 유지합니다.
   subPhases:
   - phaseName: 
     enemyList:
-    - enemyPrefab: {fileID: 447472327693995107, guid: ebe2557256bb7134c94b90cee734830e,
-        type: 3}
-      count: 5
+    - enemyPrefab: {fileID: 447472327693995107, guid: ebe2557256bb7134c94b90cee734830e, type: 3}
+      count: 10
     spawnInterval: 10
   - phaseName: 
     enemyList:
-    - enemyPrefab: {fileID: 447472327693995107, guid: ebe2557256bb7134c94b90cee734830e,
-        type: 3}
-      count: 5
-    - enemyPrefab: {fileID: 6199417063309093160, guid: 05a023d4cdfc9aa44a2ba314b6f44862,
-        type: 3}
+    - enemyPrefab: {fileID: 447472327693995107, guid: ebe2557256bb7134c94b90cee734830e, type: 3}
+      count: 15
+    - enemyPrefab: {fileID: 6199417063309093160, guid: 05a023d4cdfc9aa44a2ba314b6f44862, type: 3}
       count: 3
     spawnInterval: 20
   - phaseName: 
     enemyList:
-    - enemyPrefab: {fileID: 447472327693995107, guid: ebe2557256bb7134c94b90cee734830e,
-        type: 3}
+    - enemyPrefab: {fileID: 447472327693995107, guid: ebe2557256bb7134c94b90cee734830e, type: 3}
+      count: 23
+    - enemyPrefab: {fileID: 6199417063309093160, guid: 05a023d4cdfc9aa44a2ba314b6f44862, type: 3}
       count: 5
-    - enemyPrefab: {fileID: 6199417063309093160, guid: 05a023d4cdfc9aa44a2ba314b6f44862,
-        type: 3}
+    spawnInterval: 20
+  - phaseName: 
+    enemyList:
+    - enemyPrefab: {fileID: 447472327693995107, guid: ebe2557256bb7134c94b90cee734830e, type: 3}
+      count: 35
+    - enemyPrefab: {fileID: 6199417063309093160, guid: 05a023d4cdfc9aa44a2ba314b6f44862, type: 3}
+      count: 8
+    - enemyPrefab: {fileID: 447472327693995107, guid: 7cab06696da76a24aaac50b85b76bb46, type: 3}
+      count: 2
+    spawnInterval: 20
+  - phaseName: 
+    enemyList:
+    - enemyPrefab: {fileID: 447472327693995107, guid: ebe2557256bb7134c94b90cee734830e, type: 3}
+      count: 53
+    - enemyPrefab: {fileID: 6199417063309093160, guid: 05a023d4cdfc9aa44a2ba314b6f44862, type: 3}
+      count: 12
+    - enemyPrefab: {fileID: 447472327693995107, guid: 7cab06696da76a24aaac50b85b76bb46, type: 3}
       count: 3
     spawnInterval: 20
   - phaseName: 
     enemyList:
-    - enemyPrefab: {fileID: 447472327693995107, guid: ebe2557256bb7134c94b90cee734830e,
-        type: 3}
+    - enemyPrefab: {fileID: 447472327693995107, guid: ebe2557256bb7134c94b90cee734830e, type: 3}
+      count: 80
+    - enemyPrefab: {fileID: 6199417063309093160, guid: 05a023d4cdfc9aa44a2ba314b6f44862, type: 3}
+      count: 18
+    - enemyPrefab: {fileID: 447472327693995107, guid: 7cab06696da76a24aaac50b85b76bb46, type: 3}
       count: 5
-    - enemyPrefab: {fileID: 6199417063309093160, guid: 05a023d4cdfc9aa44a2ba314b6f44862,
-        type: 3}
-      count: 3
     spawnInterval: 20
   - phaseName: 
     enemyList:
-    - enemyPrefab: {fileID: 447472327693995107, guid: ebe2557256bb7134c94b90cee734830e,
-        type: 3}
-      count: 5
-    - enemyPrefab: {fileID: 6199417063309093160, guid: 05a023d4cdfc9aa44a2ba314b6f44862,
-        type: 3}
-      count: 3
+    - enemyPrefab: {fileID: 447472327693995107, guid: ebe2557256bb7134c94b90cee734830e, type: 3}
+      count: 120
+    - enemyPrefab: {fileID: 6199417063309093160, guid: 05a023d4cdfc9aa44a2ba314b6f44862, type: 3}
+      count: 27
+    - enemyPrefab: {fileID: 447472327693995107, guid: 7cab06696da76a24aaac50b85b76bb46, type: 3}
+      count: 8
     spawnInterval: 20
   - phaseName: 
     enemyList:
-    - enemyPrefab: {fileID: 447472327693995107, guid: ebe2557256bb7134c94b90cee734830e,
-        type: 3}
-      count: 5
-    - enemyPrefab: {fileID: 6199417063309093160, guid: 05a023d4cdfc9aa44a2ba314b6f44862,
-        type: 3}
-      count: 3
+    - enemyPrefab: {fileID: 447472327693995107, guid: ebe2557256bb7134c94b90cee734830e, type: 3}
+      count: 180
+    - enemyPrefab: {fileID: 6199417063309093160, guid: 05a023d4cdfc9aa44a2ba314b6f44862, type: 3}
+      count: 41
+    - enemyPrefab: {fileID: 447472327693995107, guid: 7cab06696da76a24aaac50b85b76bb46, type: 3}
+      count: 12
     spawnInterval: 20
   - phaseName: 
     enemyList:
-    - enemyPrefab: {fileID: 447472327693995107, guid: ebe2557256bb7134c94b90cee734830e,
-        type: 3}
-      count: 5
-    - enemyPrefab: {fileID: 6199417063309093160, guid: 05a023d4cdfc9aa44a2ba314b6f44862,
-        type: 3}
-      count: 3
+    - enemyPrefab: {fileID: 447472327693995107, guid: ebe2557256bb7134c94b90cee734830e, type: 3}
+      count: 270
+    - enemyPrefab: {fileID: 6199417063309093160, guid: 05a023d4cdfc9aa44a2ba314b6f44862, type: 3}
+      count: 62
+    - enemyPrefab: {fileID: 447472327693995107, guid: 7cab06696da76a24aaac50b85b76bb46, type: 3}
+      count: 18
     spawnInterval: 20
   - phaseName: 
     enemyList:
-    - enemyPrefab: {fileID: 447472327693995107, guid: ebe2557256bb7134c94b90cee734830e,
-        type: 3}
-      count: 5
-    - enemyPrefab: {fileID: 6199417063309093160, guid: 05a023d4cdfc9aa44a2ba314b6f44862,
-        type: 3}
-      count: 3
+    - enemyPrefab: {fileID: 447472327693995107, guid: ebe2557256bb7134c94b90cee734830e, type: 3}
+      count: 405
+    - enemyPrefab: {fileID: 6199417063309093160, guid: 05a023d4cdfc9aa44a2ba314b6f44862, type: 3}
+      count: 93
+    - enemyPrefab: {fileID: 447472327693995107, guid: 7cab06696da76a24aaac50b85b76bb46, type: 3}
+      count: 27
     spawnInterval: 20
   - phaseName: 
     enemyList:
-    - enemyPrefab: {fileID: 447472327693995107, guid: ebe2557256bb7134c94b90cee734830e,
-        type: 3}
-      count: 5
-    - enemyPrefab: {fileID: 6199417063309093160, guid: 05a023d4cdfc9aa44a2ba314b6f44862,
-        type: 3}
-      count: 3
-    spawnInterval: 20
-  - phaseName: 
-    enemyList:
-    - enemyPrefab: {fileID: 447472327693995107, guid: ebe2557256bb7134c94b90cee734830e,
-        type: 3}
-      count: 5
-    - enemyPrefab: {fileID: 6199417063309093160, guid: 05a023d4cdfc9aa44a2ba314b6f44862,
-        type: 3}
-      count: 3
-    spawnInterval: 20
-  - phaseName: 
-    enemyList:
-    - enemyPrefab: {fileID: 447472327693995107, guid: ebe2557256bb7134c94b90cee734830e,
-        type: 3}
-      count: 5
-    - enemyPrefab: {fileID: 6199417063309093160, guid: 05a023d4cdfc9aa44a2ba314b6f44862,
-        type: 3}
-      count: 3
+    - enemyPrefab: {fileID: 447472327693995107, guid: ebe2557256bb7134c94b90cee734830e, type: 3}
+      count: 608
+    - enemyPrefab: {fileID: 6199417063309093160, guid: 05a023d4cdfc9aa44a2ba314b6f44862, type: 3}
+      count: 140
+    - enemyPrefab: {fileID: 447472327693995107, guid: 7cab06696da76a24aaac50b85b76bb46, type: 3}
+      count: 41
     spawnInterval: 20

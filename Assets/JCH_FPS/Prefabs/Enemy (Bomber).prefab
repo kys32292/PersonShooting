@@ -62,7 +62,9 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 0
   animator: {fileID: 0}
-  explosionRadius: 7.5
+  # 2026-11-23: 자폭 피해 반경은 0.5로 축소하고 VFX 기준은 기존 값으로 분리합니다.
+  explosionRadius: 0.5
+  explosionVfxRadius: 7.5
 --- !u!54 &6151325760380614099
 Rigidbody:
   m_ObjectHideFlags: 0

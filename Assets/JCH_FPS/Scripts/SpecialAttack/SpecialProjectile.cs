@@ -16,7 +16,11 @@ public class SpecialProjectile : MonoBehaviour
     private readonly HashSet<IDamageable> piercedTargets = new HashSet<IDamageable>(); // 관통탄: 같은 적 중복 피해 방지
     private Transform homingTarget;
 
-    public static SpecialProjectile Spawn(PerkType type, SpecialAttackSettings settings, Vector3 origin, Vector3 direction, float damage, GameObject owner)
+    // 2026-11-23: 발사 후 강화되어도 날아가던 탄의 범위/외형은 발사 당시 레벨을 유지합니다.
+    private float gravityRadius;
+
+    // 2026-11-23: 기존 호출은 기본 레벨 1을 사용하며 컨트롤러는 실제 퍽 레벨을 전달합니다.
+    public static SpecialProjectile Spawn(PerkType type, SpecialAttackSettings settings, Vector3 origin, Vector3 direction, float damage, GameObject owner, int level = 1)
     {
         if (direction.sqrMagnitude < 0.0001f) direction = owner != null ? owner.transform.forward : Vector3.forward;
         direction.Normalize();
@@ -29,13 +33,47 @@ public class SpecialProjectile : MonoBehaviour
 
         var go = new GameObject("Special_" + type);
         go.transform.SetPositionAndRotation(origin, Quaternion.LookRotation(direction));
-        SpecialAttackUtil.CreateVisual(go.transform, settings.projectilePrefab, settings.color, settings.projectileRadius * 2f);
+        // 2026-11-23: 중력/폭발/유탄/관통탄은 각 전용 VFX를 사용하고 나머지 탄은 기존 프리팹 경로를 유지합니다.
+        float gravityRadius = settings.GetGravityRadius(level);
+        if (type == PerkType.Graviton)
+        {
+            // 이전 중력탄 프리팹 외형은 아래 공통 생성 대신 전용 서비스로 대체했습니다.
+            // SpecialAttackUtil.CreateVisual(go.transform, settings.projectilePrefab, settings.color, settings.projectileRadius * 2f);
+            PesonShooting.VFX.VfxService.AttachGravityProjectile(go.transform, gravityRadius);
+        }
+        // 2026-11-23: 폭발탄은 일반탄과 같은 선 궤적의 빨간색 버전만 표시합니다.
+        else if (type == PerkType.Explosive)
+        {
+            // 이전 프리팹 외형은 전용 빨간 일반탄 궤적으로 대체하여 주석 보관합니다.
+            // SpecialAttackUtil.CreateVisual(go.transform, settings.projectilePrefab, settings.color, settings.projectileRadius * 2f);
+            PesonShooting.VFX.VfxService.AttachExplosiveProjectile(go.transform);
+        }
+        // 2026-11-23: 유탄 외형도 일반탄 궤적을 사용하되 초록색으로 구분합니다.
+        else if (type == PerkType.Grenade)
+        {
+            // 이전 유탄 프리팹 외형은 주석으로 보관합니다.
+            // SpecialAttackUtil.CreateVisual(go.transform, settings.projectilePrefab, settings.color, settings.projectileRadius * 2f);
+            PesonShooting.VFX.VfxService.AttachGrenadeProjectile(go.transform);
+        }
+        // 2026-11-23: 관통탄은 참조 이미지의 금빛 광선/별 모양 탄두를 비행 중에만 표시합니다.
+        else if (type == PerkType.Piercing)
+        {
+            // 이전 관통탄 프리팹 외형은 새 전용 VFX로 대체하여 주석으로 보관합니다.
+            // SpecialAttackUtil.CreateVisual(go.transform, settings.projectilePrefab, settings.color, settings.projectileRadius * 2f);
+            PesonShooting.VFX.VfxService.AttachPiercingProjectile(go.transform);
+        }
+        else
+        {
+            SpecialAttackUtil.CreateVisual(go.transform, settings.projectilePrefab, settings.color, settings.projectileRadius * 2f);
+        }
 
         SpecialProjectile projectile = go.AddComponent<SpecialProjectile>();
         projectile.type = type;
         projectile.settings = settings;
         projectile.damage = damage;
         projectile.owner = owner;
+        // 2026-11-23: 같은 반경을 착탄 시 실제 중력장에도 전달합니다. 투사체 충돌 판정 크기는 유지합니다.
+        projectile.gravityRadius = gravityRadius;
         projectile.velocity = direction * settings.projectileSpeed;
         return projectile;
     }
@@ -145,7 +183,8 @@ public class SpecialProjectile : MonoBehaviour
                     PesonShooting.VFX.VfxService.PlayEnemyHit(hitCollider, point, direction);
                     enemy.TakeDamage(damage);
                 }
-                GravityField.Create(point, settings, damage);
+                // 2026-11-23: 레벨별 범위를 전투 판정/반구 VFX에 동일하게 전달합니다.
+                GravityField.Create(point, settings, damage, gravityRadius);
                 break;
 
             case PerkType.Homing:
@@ -162,7 +201,19 @@ public class SpecialProjectile : MonoBehaviour
     private void Explode(Vector3 point)
     {
         SpecialAttackUtil.DamageArea(point, settings.radius, damage);
-        SpecialFlash.Spawn(point, settings.radius, settings.color, 0.25f);
+        // 2026-11-23: 폭발탄만 FlameAmmo 참조 기반 화염으로 교체합니다. 피해 판정은 기존 1회 광역 피해입니다.
+        if (type == PerkType.Explosive)
+        {
+            // 이전 폭발탄 구체 연출을 주석 보관합니다.
+            // SpecialFlash.Spawn(point, settings.radius, settings.color, 0.25f);
+            PesonShooting.VFX.VfxService.PlayExplosiveImpact(point, settings.radius);
+        }
+        else
+        {
+            // 2026-11-23: 유탄의 이전 구체 연출을 참조 기반 화염 기둥/연기/먼지로 교체합니다.
+            // SpecialFlash.Spawn(point, settings.radius, settings.color, 0.25f);
+            PesonShooting.VFX.VfxService.PlayGrenadeImpact(point, settings.radius);
+        }
     }
 
     // 유도탄: 범위 안의 가장 가까운 살아 있는 적 쪽으로 진행 방향을 회전

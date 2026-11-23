@@ -29,7 +29,8 @@ MonoBehaviour:
     projectileLifetime: 4
     projectilePrefab: {fileID: 3372092455280466519, guid: e9d1e83e6aac23c4d8dd6562911afe79, type: 3}
     color: {r: 1, g: 0.25, b: 0.15, a: 1}
-    radius: 4
+    # 2026-11-23: 현재 축소된 VFX 기준(4 x 0.8)을 1레벨 피해 반경으로 사용합니다.
+    radius: 3.2
     duration: 2
     pullSpeed: 8
     pullDamagePerSecond: 0.5

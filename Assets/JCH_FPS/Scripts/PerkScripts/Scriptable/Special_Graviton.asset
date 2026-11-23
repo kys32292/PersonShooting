@@ -29,8 +29,11 @@ MonoBehaviour:
     projectileLifetime: 4
     projectilePrefab: {fileID: 3372092455280466519, guid: e9d1e83e6aac23c4d8dd6562911afe79, type: 3}
     color: {r: 0.6, g: 0.3, b: 1, a: 1}
-    radius: 6
+    # 2026-11-23: 시작 반경을 3으로 조정합니다. 판정과 착탄/비행 VFX에 함께 적용됩니다.
+    radius: 3
     duration: 2
+    # 2026-11-23: 레벨당 반경 0.5 증가. 비행 VFX도 이 반경 비율을 사용합니다.
+    gravityRadiusPerLevel: 0.5
     pullSpeed: 8
     pullDamagePerSecond: 0.5
     launchAngle: 10

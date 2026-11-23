@@ -12,6 +12,147 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6da665a6c1fe4d998b56db5eff7797c1, type: 3}
   m_Name: VfxConfig
   m_EditorClassIdentifier: 
+  # 2026-11-23: 폭발탄 질감을 재사용하되 노란빛 중심으로 균일하게 팽창하는 폭발 적 자폭 VFX입니다.
+  bomberExplosion:
+    enabled: 1
+    duration: 0.7
+    radiusScale: 1
+    flameCount: 32
+    hotColor: {r: 4, g: 3.8, b: 1.8, a: 1}
+    flameColor: {r: 3, g: 2.4, b: 0.12, a: 1}
+    edgeColor: {r: 1.6, g: 0.75, b: 0.025, a: 0.85}
+    noiseScale: 5
+    distortion: 0.28
+    flameSpeed: 3
+    sparkCount: 24
+    sparkWidth: 0.04
+    sparkLength: 0.12
+  # 2026-11-23: 약한 피격 흔들림과 실제 HP 50 이하의 옅은 피 테두리 설정입니다.
+  playerHit:
+    shakeEnabled: 1
+    shakeAmplitude: 0.025
+    # 2026-11-23: 먼 배경에서도 약한 피격을 식별할 수 있도록 작은 각도 흔들림을 더합니다.
+    shakeRotation: 0.35
+    shakeDuration: 0.12
+    bloodEnabled: 1
+    healthThreshold: 50
+    thresholdOpacity: 0.14
+    criticalOpacity: 0.26
+    edgeWidth: 0.17
+    bloodColor: {r: 0.52, g: 0.015, b: 0.025, a: 1}
+    fadeSpeed: 0.65
+  # 2026-11-23: 참조의 가는 금빛 광선과 별 모양 탄두/반짝임을 구성하는 관통탄 설정입니다.
+  piercingAmmo:
+    enabled: 1
+    length: 3
+    # 2026-11-23: 중심/주변 광채 굵기에 각각 0.5를 더하며 실제 충돌 반경은 유지합니다.
+    width: 0.545
+    haloWidth: 0.66
+    coreColor: {r: 2, g: 1.85, b: 0.9, a: 1}
+    haloColor: {r: 1, g: 0.7, b: 0.15, a: 0.22}
+    tipSize: 0.35
+    tipColor: {r: 2.5, g: 2.3, b: 1.4, a: 1}
+    tipPulse: 0.12
+    pulseSpeed: 10
+    flare: {fileID: 2800000, guid: 1a5e0f524d5222343a5d36d778a594bf, type: 3}
+    glintCount: 4
+    glintSize: 0.09
+    glintSpeed: 1.5
+  # 2026-11-23: 초록 비행탄과 위로 솟는 화염/연기/바닥 먼지의 유탄 전용 설정입니다.
+  grenadeAmmo:
+    projectileEnabled: 1
+    projectileHead: {r: 0.15, g: 1.5, b: 0.08, a: 1}
+    projectileTail: {r: 0.02, g: 0.5, b: 0.01, a: 0}
+    impactEnabled: 1
+    duration: 1.8
+    fireDuration: 0.65
+    # 2026-11-23: 기존 외형 배율을 퍽의 1레벨 반경에 반영했으므로 1로 맞춰 현재 외형을 유지합니다.
+    radiusScale: 1
+    columnHeight: 2.5
+    flameCount: 20
+    hotColor: {r: 3, g: 2.7, b: 1.4, a: 1}
+    flameColor: {r: 2, g: 0.6, b: 0.025, a: 1}
+    edgeColor: {r: 0.8, g: 0.06, b: 0.005, a: 0.9}
+    noiseScale: 5
+    distortion: 0.45
+    fireSpeed: 2.5
+    smokeCount: 18
+    smokeColor: {r: 0.09, g: 0.085, b: 0.08, a: 0.8}
+    smokeSize: 0.6
+    smokeRise: 1.6
+    dustCount: 12
+    dustColor: {r: 0.28, g: 0.22, b: 0.15, a: 0.65}
+    dustSpread: 1.15
+    sparkCount: 24
+    sparkWidth: 0.03
+    sparkLength: 0.1
+  # 2026-11-23: 일반탄과 같은 빨간 궤적 및 FlameAmmo 참조 기반 화염 폭발 설정입니다.
+  explosiveAmmo:
+    projectileEnabled: 1
+    projectileHead: {r: 1.6, g: 0.08, b: 0.03, a: 1}
+    projectileTail: {r: 0.7, g: 0.01, b: 0, a: 0}
+    impactEnabled: 1
+    duration: 0.7
+    # 2026-11-23: 축소된 외형을 1레벨 피해 반경으로 반영하고 중복 축소를 막기 위해 배율을 1로 맞춥니다.
+    radiusScale: 1
+    flameCount: 20
+    hotColor: {r: 3, g: 2.5, b: 1.1, a: 1}
+    flameColor: {r: 1.8, g: 0.45, b: 0.025, a: 1}
+    edgeColor: {r: 0.65, g: 0.035, b: 0.005, a: 0.85}
+    noiseScale: 5
+    distortion: 0.45
+    flameSpeed: 2.5
+    rise: 0.35
+    sparkCount: 32
+    sparkWidth: 0.035
+    sparkLength: 0.12
+  # 2026-11-23: 발사 당시 중력장 반경에 비례하는 비행탄 외형이며 실제 충돌 반경과는 별개입니다.
+  gravityProjectile:
+    enabled: 1
+    referenceRadius: 6
+    diameter: 2
+    coreColor: {r: 0.025, g: 0.015, b: 0.09, a: 1}
+    coreRatio: 0.8
+    rimColor: {r: 0.15, g: 1.1, b: 1.8, a: 0.45}
+    rimRatio: 1.08
+    ribbonCount: 3
+    ribbonWidth: 0.035
+    ribbonArc: 0.8
+    spinSpeed: 240
+    ribbonHead: {r: 0.2, g: 1.1, b: 1.6, a: 0.9}
+    ribbonTail: {r: 0.8, g: 0.15, b: 1, a: 0}
+    tailLength: 1.8
+    tailWidth: 0.06
+  # 2026-11-23: 중력장 입자/반구/바닥 원/중심 빛의 외형을 통합 조절합니다.
+  gravityWell:
+    enabled: 1
+    color: {r: 0.6, g: 0.3, b: 1, a: 1}
+    brightness: 0.7
+    fadeIn: 0.12
+    fadeOut: 0.3
+    material: {fileID: 0}
+    particleCount: 40
+    particleWidth: {x: 0.012, y: 0.028}
+    particleLength: {x: 0.06, y: 0.22}
+    particleSpeed: {x: 0.8, y: 1.5}
+    particleHeight: {x: 0.05, y: 1.2}
+    particleEndRadius: 0.12
+    particleBend: 0.28
+    particleOpacity: 0.75
+    groundOffset: 0.025
+    ringWidth: 0.018
+    ringOpacity: 0.15
+    showDome: 1
+    domeOpacity: 0.1
+    arcWidth: 0.012
+    arcOpacity: 0.2
+    flare: {fileID: 2800000, guid: 1a5e0f524d5222343a5d36d778a594bf, type: 3}
+    coreSize: 0.24
+    coreHeight: 0.22
+    coreOpacity: 0.5
+    corePulseSize: 0.03
+    corePulseOpacity: 0.1
+    corePulseSpeed: 12
   perkAbsorb:
     enabled: 1
     absorbDuration: 0.6
