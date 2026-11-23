@@ -132,9 +132,14 @@ namespace PesonShooting.VFX
             public Material material; // 선택 사항: 정점 색상과 투명도를 지원하는 선/반구 머티리얼.
 
             [Header("흡입 입자 (크기와 길이는 월드 단위)")]
-            [InspectorName("흡입 입자 개수")]
-            [Tooltip("동시에 보이는 흡입 입자 수입니다. 크기는 바뀌지 않습니다. 0이면 입자를 숨깁니다. 다음 착탄부터 적용됩니다.")]
+            [InspectorName("기존 낮은 흡입 입자 개수")]
+            [Tooltip("기존 낮은 높이에서 생성되는 흡입 입자 수입니다. 반구 입자는 아래 항목으로 별도 조절합니다. 다음 착탄부터 적용됩니다.")]
             [Range(0, 256)] public int particleCount = 40; // 동시 흡입 입자 수. 0이면 생략.
+            [InspectorName("위쪽 반구 흡입 입자 개수")]
+            [Tooltip("위쪽 반구 내부 여러 높이에서 생겨 바닥 중앙으로 내려오는 추가 입자 수입니다. 기존 입자의 굵기·길이·속도·색을 공유합니다. 0이면 추가 입자를 숨깁니다.")]
+            [Range(0, 256)] public int hemisphereParticleCount = 32;
+            [InspectorName("반구 입자 길이 배율"), Tooltip("기존 입자 길이에 곱해 위쪽에서 내려오는 흐름을 더 잘 보이게 합니다. 기존 낮은 입자는 바뀌지 않습니다."), Min(0f)]
+            public float hemisphereLengthScale = 2.5f;
             [InspectorName("입자 굵기 (X 최소 / Y 최대)")]
             [Tooltip("입자의 두께를 키우려면 X와 Y를 함께 올리세요. 각 입자는 이 범위에서 무작위 굵기로 생성됩니다. 월드 단위이며 다음 착탄부터 적용됩니다.")]
             public Vector2 particleWidth = new Vector2(0.012f, 0.028f); // 입자별 무작위 굵기 범위.
@@ -263,8 +268,10 @@ namespace PesonShooting.VFX
         public sealed class ExplosiveAmmoSettings
         {
             [Header("일반탄과 같은 궤적 / 빨간색")]
-            [InspectorName("빨간 비행 궤적 표시"), Tooltip("일반 총알과 같은 길이와 굵기의 궤적을 사용합니다. 다음 발사부터 적용됩니다.")]
+            [InspectorName("빨간 비행 궤적 표시"), Tooltip("일반 총알과 같은 길이에 전용 굵기 배율을 적용합니다. 다음 발사부터 적용됩니다.")]
             public bool projectileEnabled = true;
+            [InspectorName("비행 궤적 굵기 배율"), Tooltip("일반 총알 궤적 굵기에 곱합니다. 폭발탄에만 적용됩니다.")]
+            [Min(0f)] public float projectileWidthScale = 1.5f;
             [InspectorName("궤적 머리 색"), Tooltip("총알 쪽 빨간색과 불투명도입니다. 일반탄 색은 바뀌지 않습니다.")]
             [ColorUsage(true, true)] public Color projectileHead = new Color(1.6f, 0.08f, 0.03f, 1f);
             [InspectorName("궤적 꼬리 색"), Tooltip("궤적 끝의 색과 불투명도입니다. 알파 A가 0이면 끝이 투명합니다.")]
@@ -375,14 +382,14 @@ namespace PesonShooting.VFX
             [InspectorName("관통탄 비행 VFX 표시"), Tooltip("금빛 광선과 별 모양 탄두를 켜거나 끕니다. 관통 판정과 피해는 유지됩니다. 변경은 다음 발사부터 적용합니다.")]
             public bool enabled = true;
             [Header("진한 금빛 레이저")]
-            [InspectorName("광선 길이"), Tooltip("탄두 뒤로 뻗는 광선 길이입니다. 월드 단위이며 실제 사거리와는 별개입니다.")]
-            [Min(0.01f)] public float length = 3f;
+            // 이전 길이 값은 보존하되 발사 위치부터 이어지는 레이저에는 사용하지 않습니다.
+            [HideInInspector] public float length = 3f;
             [InspectorName("광선 중심 굵기"), Tooltip("밝은 중심 선의 두께입니다. 월드 단위이며 실제 충돌 반경은 바꾸지 않습니다.")]
-            // 2026-11-23: 기존 중심 굵기 0.045에 0.5를 더합니다. 꼬리까지 같은 굵기로 유지합니다.
-            [Min(0.001f)] public float width = 0.545f;
+            // 기본 일반탄 굵기 0.06의 1.5배입니다. 저장된 에셋은 해당 일반탄 굵기에 맞춥니다.
+            [Min(0.001f)] public float width = 0.09f;
             [InspectorName("주변 광채 굵기"), Tooltip("중심 선 바깥의 은은한 금빛 선 두께입니다. 월드 단위입니다.")]
-            // 2026-11-23: 중심을 감싸는 광채도 0.5 증가시켜 기존 굵기 차이를 유지합니다.
-            [Min(0f)] public float haloWidth = 0.66f;
+            // 중심과 주변 광채의 기존 비율을 유지합니다.
+            [Min(0f)] public float haloWidth = 0.10899083f;
             [InspectorName("광선 중심 색"), Tooltip("밝은 금빛 중심 선의 색과 불투명도입니다. HDR 강도를 조절할 수 있습니다.")]
             [ColorUsage(true, true)] public Color coreColor = new Color(2f, 1.85f, 0.9f, 1f);
             [InspectorName("주변 광채 색"), Tooltip("선 바깥의 부드러운 금빛과 불투명도입니다. 알파 A를 줄이면 은은해집니다.")]
@@ -415,8 +422,8 @@ namespace PesonShooting.VFX
             public bool enabled = true;
             [InspectorName("폭발 시간 (초)"), Tooltip("노란 화염구가 팽창하고 사라지는 시간입니다.")]
             [Min(0.05f)] public float duration = 0.7f;
-            [InspectorName("폭발 외형 크기 배율"), Tooltip("폭발 적의 폭발 VFX 기준 반경에 곱합니다. 피해 반경 0.5와 독립적으로 크기를 조절합니다.")]
-            [Min(0.01f)] public float radiusScale = 1f;
+            [InspectorName("폭발 외형 크기 배율"), Tooltip("폭발 적의 폭발 VFX 기준 반경에 곱합니다. 실제 피해 반경과 독립적으로 크기를 조절합니다.")]
+            [Min(0.01f)] public float radiusScale = 0.5f;
             [InspectorName("구형 불꽃 개수"), Tooltip("구 표면을 균일하게 덮는 둥근 불꽃 개수입니다. 중심 빛은 별도로 1개 생성합니다.")]
             [Range(1, 64)] public int flameCount = 32;
             [InspectorName("중심 밝은 노란빛"), Tooltip("화염구 중심 색입니다. 기본은 밝은 노란 흰색입니다.")]
@@ -473,6 +480,24 @@ namespace PesonShooting.VFX
             [Min(0.01f)] public float fadeSpeed = 0.65f;
         }
 
+        [Serializable]
+        public sealed class FireRingSettings
+        {
+            [InspectorName("화염 고리 표시")] public bool enabled = true;
+            [InspectorName("화염 띠 너비"), Min(0.05f)] public float bandWidth = 0.85f;
+            [InspectorName("불꽃 꼬리 길이 (각도)"), Tooltip("각 중심점 뒤로 뻗는 꼬리의 각도입니다. 기본 96도이며 3개 불꽃 사이에 24도씩 틈이 생깁니다."), Range(10f, 115f)] public float trailArcDegrees = 96f;
+            [InspectorName("바깥 불꽃 높이"), Min(0f)] public float flameHeight = 0.5f;
+            [InspectorName("불꽃 흐름 속도"), Min(0f)] public float flowSpeed = 1f;
+            [InspectorName("노란 중심 색"), ColorUsage(true, true)] public Color hotColor = new Color(1.5f, 0.95f, 0.08f, 1f);
+            [InspectorName("주황 불꽃 색"), ColorUsage(true, true)] public Color flameColor = new Color(1.3f, 0.22f, 0.015f, 1f);
+            [InspectorName("빨간 가장자리 색"), ColorUsage(true, true)] public Color edgeColor = new Color(0.9f, 0.025f, 0.005f, 1f);
+        }
+
+        [InspectorName("플레이어 주변 화염 고리 (Fire Ring)")]
+        [Tooltip("외형만 조절합니다. 공전 반경, 속도, 지속 시간과 피해는 화염의 고리 퍽 설정을 따릅니다.")]
+        [SerializeField] private FireRingSettings fireRing = new FireRingSettings();
+        public FireRingSettings FireRing => fireRing;
+
         // 2026-11-23: 플레이어 피격 설정 그룹을 공용 Config에 노출합니다.
         [InspectorName("플레이어 피격과 체력 부족 테두리 (Player Hit)")]
         [Tooltip("피격 시 약한 카메라 흔들림과 HP 50 이하의 옅은 피 테두리 설정입니다.")]
@@ -493,7 +518,7 @@ namespace PesonShooting.VFX
 
         // 2026-11-23: 폭발탄의 색과 화염 연출을 한곳에서 설정합니다. 저장된 다른 VFX 수치는 유지합니다.
         [InspectorName("폭발탄 비행과 화염 폭발 (Explosive Ammo)")]
-        [Tooltip("비행 궤적의 길이/굵기는 일반 총알 궤적 설정을 공유하며 색만 별도로 지정합니다. 폭발 수치는 다음 착탄부터 적용됩니다.")]
+        [Tooltip("비행 궤적은 일반 총알 길이를 공유하며 굵기 배율과 색을 별도로 지정합니다. 폭발 수치는 다음 착탄부터 적용됩니다.")]
         [SerializeField] private ExplosiveAmmoSettings explosiveAmmo = new ExplosiveAmmoSettings();
         public ExplosiveAmmoSettings ExplosiveAmmo => explosiveAmmo;
 

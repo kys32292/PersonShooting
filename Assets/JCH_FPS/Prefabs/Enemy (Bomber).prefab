@@ -56,14 +56,14 @@ MonoBehaviour:
   targetPlayer: {fileID: 0}
   moveSpeed: 10
   damage: 50
-  attackRange: 5
+  attackRange: 3
   attackRate: 1
   wallLayer:
     serializedVersion: 2
     m_Bits: 0
   animator: {fileID: 0}
-  # 2026-11-23: 자폭 피해 반경은 0.5로 축소하고 VFX 기준은 기존 값으로 분리합니다.
-  explosionRadius: 0.5
+  # 자폭 시작 거리와 피해 반경을 3으로 맞춥니다. VFX 기준은 별도로 유지합니다.
+  explosionRadius: 3
   explosionVfxRadius: 7.5
 --- !u!54 &6151325760380614099
 Rigidbody:

@@ -130,6 +130,7 @@ namespace PesonShooting.VFX.Editor
     public sealed class KoreanGravityWellDrawer : KoreanVfxSettingsDrawer
     {
         protected override Type SettingsType => typeof(VfxConfig.GravityWellSettings);
+        protected override string HelpText => "기존 낮은 입자와 위쪽 반구 입자를 별도로 조절합니다. 반구 입자는 범위 안의 여러 높이에서 바닥 중앙으로 흡입됩니다. 굵기·길이·속도·색은 공유합니다.";
     }
 
     [CustomPropertyDrawer(typeof(VfxConfig.GravityProjectileSettings))]
@@ -138,11 +139,18 @@ namespace PesonShooting.VFX.Editor
         protected override Type SettingsType => typeof(VfxConfig.GravityProjectileSettings);
     }
 
+    [CustomPropertyDrawer(typeof(VfxConfig.FireRingSettings))]
+    public sealed class KoreanFireRingDrawer : KoreanVfxSettingsDrawer
+    {
+        protected override Type SettingsType => typeof(VfxConfig.FireRingSettings);
+        protected override string HelpText => "3개 공전 중심점마다 뒤로 가늘어지는 불꽃 꼬리가 붙습니다. 꼬리 길이(각도)로 불꽃 사이 간격을 조절합니다. 피해는 기존 공전 지점에서 판정합니다.";
+    }
+
     [CustomPropertyDrawer(typeof(VfxConfig.ExplosiveAmmoSettings))]
     public sealed class KoreanExplosiveAmmoDrawer : KoreanVfxSettingsDrawer
     {
         protected override Type SettingsType => typeof(VfxConfig.ExplosiveAmmoSettings);
-        protected override string HelpText => "크기는 '폭발 외형 크기 배율'로 조절합니다. 비행 길이와 굵기는 '일반 총알 궤적' 설정을 공유합니다. 항목에 마우스를 올리면 단위와 역할이 표시됩니다. 수정 후 테스트 씬에서 다시 재생하세요.";
+        protected override string HelpText => "크기는 '폭발 외형 크기 배율'로 조절합니다. 비행 길이는 '일반 총알 궤적' 설정을 공유하고 굵기는 전용 배율로 조절합니다. 항목에 마우스를 올리면 단위와 역할이 표시됩니다. 수정 후 테스트 씬에서 다시 재생하세요.";
     }
 
     // 2026-11-23: 관통탄도 모든 조절 항목을 한국어 이름/설명으로 표시합니다.
@@ -150,7 +158,7 @@ namespace PesonShooting.VFX.Editor
     public sealed class KoreanPiercingAmmoDrawer : KoreanVfxSettingsDrawer
     {
         protected override Type SettingsType => typeof(VfxConfig.PiercingAmmoSettings);
-        protected override string HelpText => "관통탄 자체의 금빛 광선입니다. 광선 길이/중심 굵기/탄두 별 크기로 외형을 조절합니다. 실제 충돌 반경과 관통 횟수는 관통탄 퍽 설정입니다. 항목에 마우스를 올리면 한국어 설명이 표시됩니다.";
+        protected override string HelpText => "발사 당시 총구 위치부터 탄두까지 이어지는 금빛 광선입니다. 중심 굵기/탄두 별 크기로 외형을 조절합니다. 실제 충돌 반경과 관통 횟수는 관통탄 퍽 설정입니다. 항목에 마우스를 올리면 한국어 설명이 표시됩니다.";
     }
 
     // 2026-11-23: 폭발 적 설정도 한국어 조절 항목과 실제 피해 반경의 차이를 안내합니다.

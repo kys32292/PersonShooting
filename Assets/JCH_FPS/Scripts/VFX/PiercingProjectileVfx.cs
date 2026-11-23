@@ -11,6 +11,8 @@ namespace PesonShooting.VFX
         // 2026-11-23: 공유 선 머티리얼과 직접 만든 대체/중심 빛 머티리얼을 구분해 소유 자원만 해제합니다.
         private Material lineMaterial, ownedLineMaterial, glowMaterial;
         private Camera view;
+        private Vector3 launchPosition;
+        private readonly LineRenderer[] beams = new LineRenderer[2];
         private LineRenderer[] tip;
         private LineRenderer[][] glints;
         private ParticleSystem glow;
@@ -21,6 +23,7 @@ namespace PesonShooting.VFX
         public void Initialize(VfxConfig.PiercingAmmoSettings config)
         {
             settings = config;
+            launchPosition = transform.position;
             lineMaterial = Resources.Load<Material>("VFX/BulletTrail");
             if (lineMaterial == null)
             {
@@ -32,8 +35,8 @@ namespace PesonShooting.VFX
             if (view == null) view = FindFirstObjectByType<Camera>();
 
             // 2026-11-23: 탄두가 로컬 원점이며 진한 레이저가 뒤쪽(-Z)까지 같은 굵기/색으로 이어집니다.
-            CreateBeam("Soft golden beam halo", config.haloWidth, config.haloColor);
-            CreateBeam("Solid bright golden laser", config.width, config.coreColor);
+            beams[0] = CreateBeam("Soft golden beam halo", config.haloWidth, config.haloColor);
+            beams[1] = CreateBeam("Solid bright golden laser", config.width, config.coreColor);
             tip = CreateStar("Four pointed projectile tip", config.tipSize * 0.16f);
             glints = new LineRenderer[Mathf.Clamp(config.glintCount, 0, 32)][];
             // 2026-11-23: 작은 별은 위상을 나눠 광선을 따라 흐르며 양 끝에서는 투명해집니다.
@@ -70,7 +73,7 @@ namespace PesonShooting.VFX
         }
 
         // 2026-11-23: 비행 내내 양 끝의 굵기와 알파를 같게 유지해 꼬리가 흐려지지 않는 레이저로 표시합니다.
-        private void CreateBeam(string label, float width, Color color)
+        private LineRenderer CreateBeam(string label, float width, Color color)
         {
             LineRenderer line = CreateLine(label, 2, width);
             // 2026-11-23: 기존 꼬리 축소/투명화는 아래 주석으로 보관하고 균일한 광선으로 대체합니다.
@@ -79,9 +82,10 @@ namespace PesonShooting.VFX
             // color.a = 0f;
             // line.startColor = color;
             line.widthCurve = AnimationCurve.Linear(0f, 1f, 1f, 1f);
-            line.SetPosition(0, Vector3.back * Mathf.Max(0f, settings.length));
+            line.SetPosition(0, transform.InverseTransformPoint(launchPosition));
             line.SetPosition(1, Vector3.zero);
             line.startColor = line.endColor = color;
+            return line;
         }
 
         // 2026-11-23: 화면을 향한 두 개의 뾰족한 선을 교차해 네 갈래 별 모양을 만듭니다.
@@ -117,6 +121,10 @@ namespace PesonShooting.VFX
         {
             if (settings == null || SpecialAttackUtil.IsPaused) return;
             elapsed += Time.deltaTime;
+            // 발사 당시 총구 위치를 고정해 탄두가 멀어져도 꼬리가 잘리지 않게 합니다.
+            Vector3 tail = transform.InverseTransformPoint(launchPosition);
+            foreach (LineRenderer beam in beams)
+                beam.SetPosition(0, tail);
             DrawStars();
         }
 
@@ -133,7 +141,7 @@ namespace PesonShooting.VFX
                 float visibility = Mathf.Sin(t * Mathf.PI);
                 Color color = settings.tipColor;
                 color.a *= visibility;
-                SetStar(glints[i], Vector3.back * (t * Mathf.Max(0f, settings.length)), right, up,
+                SetStar(glints[i], transform.InverseTransformPoint(launchPosition) * t, right, up,
                     Mathf.Max(0f, settings.glintSize) * visibility, color);
             }
             if (glow != null)

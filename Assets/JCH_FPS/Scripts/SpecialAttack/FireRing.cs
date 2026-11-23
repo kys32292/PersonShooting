@@ -11,6 +11,8 @@ public class FireRing : MonoBehaviour
     private float damage;
     private float remaining = 0f;
     private float angle = 0f;
+    private float visualElapsed;
+    private PesonShooting.VFX.FireRingVfx visual;
 
     private readonly List<Transform> orbs = new List<Transform>();
     private readonly Dictionary<IDamageable, float> lastHitTime = new Dictionary<IDamageable, float>();
@@ -28,10 +30,11 @@ public class FireRing : MonoBehaviour
         {
             var orb = new GameObject("FireOrb").transform;
             orb.SetParent(go.transform, false);
-            SpecialAttackUtil.CreateVisual(orb, settings.projectilePrefab, settings.color, settings.projectileRadius * 2f);
+            // 피해 판정용 공전 위치는 유지하고, 외형은 전용 화염 띠로 표시합니다.
             ring.orbs.Add(orb);
         }
 
+        ring.visual = PesonShooting.VFX.VfxService.AttachFireRing(go.transform, settings.radius, count);
         go.SetActive(false);
         return ring;
     }
@@ -42,6 +45,7 @@ public class FireRing : MonoBehaviour
         remaining = settings.duration;
         gameObject.SetActive(true);
         UpdateOrbPositions();
+        if (visual != null) visual.Draw(angle, visualElapsed, 1f);
     }
 
     private void Update()
@@ -64,7 +68,9 @@ public class FireRing : MonoBehaviour
         }
 
         angle += settings.ringOrbitSpeed * dt;
+        visualElapsed += dt;
         UpdateOrbPositions();
+        if (visual != null) visual.Draw(angle, visualElapsed, remaining / 0.25f);
         DamageEnemies();
     }
 

@@ -9,7 +9,8 @@ namespace PesonShooting.VFX
         private struct Strand
         {
             public LineRenderer line;
-            public float phase, angle, height, speed;
+            public float phase, angle, height, speed, startRadius;
+            public bool airborne;
         }
 
         private Strand[] strands;
@@ -60,17 +61,30 @@ namespace PesonShooting.VFX
             }
 
             // 2026-11-23: 입자는 별도 물리 판정 없이 안쪽으로 이동하는 선이며 개수는 안전 범위로 제한합니다.
-            strands = new Strand[Mathf.Clamp(settings.particleCount, 0, 256)];
+            int groundCount = Mathf.Clamp(settings.particleCount, 0, 256);
+            int airborneCount = Mathf.Clamp(settings.hemisphereParticleCount, 0, 256);
+            strands = new Strand[groundCount + airborneCount];
             for (int i = 0; i < strands.Length; i++)
             {
+                bool airborne = i >= groundCount;
                 strands[i] = new Strand
                 {
-                    line = MakeLine("Inward streak", 2, RandomPositive(settings.particleWidth)),
+                    line = MakeLine(airborne ? "Hemisphere inward streak" : "Inward streak", 2, RandomPositive(settings.particleWidth)),
                     phase = Random.value,
                     angle = Random.value * Mathf.PI * 2,
                     height = Mathf.Min(radius, RandomPositive(settings.particleHeight)),
-                    speed = RandomPositive(settings.particleSpeed)
+                    speed = RandomPositive(settings.particleSpeed),
+                    startRadius = radius,
+                    airborne = airborne
                 };
+                if (airborne)
+                {
+                    // 위쪽 반구의 높이를 나누어 배치하고 수평 반경도 줄여 실제 구 범위 안에서 시작합니다.
+                    float elevation = Mathf.Lerp(0.2f, 0.95f, (i - groundCount + 0.5f) / airborneCount);
+                    float spawnRadius = radius * Random.Range(0.65f, 0.95f);
+                    strands[i].height = elevation * spawnRadius;
+                    strands[i].startRadius = Mathf.Sqrt(1f - elevation * elevation) * spawnRadius;
+                }
             }
 
             // 2026-11-23: 빛 한 개만 직접 갱신하므로 중심에 불투명 구체를 만들지 않습니다.
@@ -171,13 +185,26 @@ namespace PesonShooting.VFX
             {
                 // 2026-11-23: 입자의 굵기/길이/속도/생성 높이/휘어짐을 Config 값으로 계산합니다.
                 float progress = Mathf.Repeat(elapsed * strand.speed + strand.phase, 1f);
-                float r = Mathf.Lerp(radius, Mathf.Clamp(settings.particleEndRadius, 0, radius), progress);
+                float endRadius = strand.airborne ? 0f : Mathf.Clamp(settings.particleEndRadius, 0, radius);
+                float r = Mathf.Lerp(strand.startRadius, endRadius, progress);
                 float angle = strand.angle + progress * settings.particleBend;
-                Vector3 head = new Vector3(Mathf.Cos(angle) * r, Mathf.Lerp(strand.height, Mathf.Min(radius, Mathf.Max(0, settings.coreHeight)), progress), Mathf.Sin(angle) * r);
-                Vector3 tail = head + (head - Vector3.up * Mathf.Min(radius, Mathf.Max(0, settings.coreHeight))).normalized * Mathf.Max(0, Mathf.Lerp(settings.particleLength.x, settings.particleLength.y, progress));
+                float targetHeight = Mathf.Min(radius, Mathf.Max(0, strand.airborne ? settings.groundOffset : settings.coreHeight));
+                Vector3 focus = Vector3.up * targetHeight;
+                Vector3 head = new Vector3(Mathf.Cos(angle) * r, Mathf.Lerp(strand.height, targetHeight, progress), Mathf.Sin(angle) * r);
+                float length = Mathf.Max(0, Mathf.Lerp(settings.particleLength.x, settings.particleLength.y, progress));
+                if (strand.airborne) length *= Mathf.Max(0f, settings.hemisphereLengthScale);
+                Vector3 tail = head + (head - focus).normalized * length;
+                if (strand.airborne)
+                    tail = Vector3.ClampMagnitude(tail, radius);
                 strand.line.SetPosition(0, tail);
                 strand.line.SetPosition(1, head);
                 Color headColor = settings.color;
+                if (strand.airborne)
+                {
+                    headColor.r *= 1.35f;
+                    headColor.g *= 1.35f;
+                    headColor.b *= 1.35f;
+                }
                 headColor.a = Mathf.Sin(progress * Mathf.PI) * fade * settings.particleOpacity * settings.brightness * settings.color.a;
                 Color tailColor = headColor;
                 tailColor.a = 0;

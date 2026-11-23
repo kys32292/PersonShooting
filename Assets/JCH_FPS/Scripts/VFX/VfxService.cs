@@ -18,6 +18,16 @@ namespace PesonShooting.VFX
         // 2026-11-23: 테스트 씬도 실제 게임과 같은 중력장 외형 설정을 조회합니다.
         internal static VfxConfig.GravityWellSettings GravityWell => LoadConfig() ? config.GravityWell : null;
 
+        public static FireRingVfx AttachFireRing(Transform ring, float radius, int centerCount = 3)
+        {
+            if (!Application.isPlaying || ring == null || !LoadConfig()) return null;
+            var instance = new GameObject("Orbiting stylized flame ring");
+            instance.transform.SetParent(ring, false);
+            var effect = instance.AddComponent<FireRingVfx>();
+            effect.Initialize(radius, config.FireRing, centerCount);
+            return effect;
+        }
+
         // 2026-11-23: 착탄 지점의 GravityField 자식으로 붙여 이동/일시정지/소멸 수명을 맞춥니다.
         // 전투 범위와 유지 시간은 호출자가 전달하고, 외형 수치는 VfxConfig에서 가져옵니다.
         public static GravityWellVfx AttachGravityWell(Transform field, float radius, float duration)
@@ -86,7 +96,7 @@ namespace PesonShooting.VFX
             VfxConfig.ExplosiveAmmoSettings ammo = config.ExplosiveAmmo;
             // 2026-11-23: 색 복사/궤적 생성은 유탄과 같은 경로를 사용합니다.
             if (ammo == null || !ammo.projectileEnabled) return;
-            AttachColoredBulletTrail(projectile, ammo.projectileHead, ammo.projectileTail, "Explosive Red Bullet Trail");
+            AttachColoredBulletTrail(projectile, ammo.projectileHead, ammo.projectileTail, "Explosive Red Bullet Trail", ammo.projectileWidthScale);
         }
 
         // 2026-11-23: 유탄은 일반탄 궤적의 초록색 버전을 사용하며 기존 포물선 이동을 그대로 따릅니다.
@@ -99,13 +109,13 @@ namespace PesonShooting.VFX
         }
 
         // 2026-11-23: 일반탄 설정을 변경하지 않고 색만 다른 인스턴스 설정으로 복사합니다.
-        private static void AttachColoredBulletTrail(Transform projectile, Color head, Color tail, string label)
+        private static void AttachColoredBulletTrail(Transform projectile, Color head, Color tail, string label, float widthScale = 1f)
         {
             VfxConfig.BulletTrailSettings source = config.BulletTrail;
             if (source == null) return;
             var coloredTrail = new VfxConfig.BulletTrailSettings
             {
-                length = source.length, width = source.width, tailWidthRatio = source.tailWidthRatio,
+                length = source.length, width = source.width * Mathf.Max(0f, widthScale), tailWidthRatio = source.tailWidthRatio,
                 headColor = head, tailColor = tail,
                 fadeDuration = source.fadeDuration, minVertexDistance = source.minVertexDistance, material = source.material
             };

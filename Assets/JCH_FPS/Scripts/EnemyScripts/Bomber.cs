@@ -11,10 +11,10 @@ public class Bomber : EnemyBase
     }
 
     [Header("폭발 피해 반경")]
-    // 2026-11-23: 실제 범위 피해만 반경 0.5로 축소하며 VFX 외형 크기는 아래 기준값으로 분리합니다.
+    // 자폭 시작 거리와 같은 피해 반경 3을 사용합니다. VFX 외형 크기는 별도 설정입니다.
     [Tooltip("자폭 피해 반경입니다. VFX 크기는 바꾸지 않습니다.")]
     [SerializeField]
-    private float explosionRadius = 0.5f;
+    private float explosionRadius = 3f;
     // 2026-11-23: 기존 VFX 기준 반경 7.5를 유지해 사용자가 줄여 둔 Config 배율이 중복 축소되지 않게 합니다.
     [Header("폭발 VFX 기준 반경")]
     [Tooltip("VfxConfig의 폭발 외형 크기 배율에 곱할 기준 반경입니다. 실제 피해 반경과 독립적입니다.")]
