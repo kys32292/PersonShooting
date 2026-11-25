@@ -17,6 +17,7 @@ public class PerkUIController : MonoBehaviour
     public void DisplayPerks(List<PerkData> perks)
     {
         uiPanel.SetActive(true);
+        UISorting.BringToFront(uiPanel, UISorting.PerkOrder); // 2026-11-25: 경험치 팝업보다 위에 그리기
 
         if(GameManager.Instance != null)
         {

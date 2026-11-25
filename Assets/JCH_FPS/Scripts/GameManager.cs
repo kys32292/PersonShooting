@@ -37,6 +37,7 @@ public class GameManager : MonoBehaviour
     private float survivalTime = 0f;
     private float totalEXP = 0f; // 레벨업 때 잘리는 초과분까지 포함한 획득 경험치 총합 (= 점수)
     private readonly List<PerkData> selectedPerks = new List<PerkData>();
+    public IReadOnlyList<PerkData> SelectedPerks => selectedPerks; // 2026-11-25: ESC 메뉴에서 선택한 증강 표시용
     private bool isGameOver = false;
 
     private void Awake()
